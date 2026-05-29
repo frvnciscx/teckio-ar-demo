@@ -4,6 +4,22 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8.4] — 2026-05-29 · Tabletop UX — fuera hotspots flotantes, dentro botón "Unidades"
+
+### Removed
+- **Hotspots flotantes 3D-projected en AR mode**. Saturaban visualmente el modelo, especialmente desde ángulos cenitales donde el edificio se ve plano. Eliminados de tabletop.html.
+- `buildHotspots()` y `updateHotspotPositions()` ya no se usan; loop de animación queda solo con `renderer.render()`.
+
+### Added
+- **Botón "Unidades"** en la barra superior de AR. Tap → abre sheet con lista completa de unidades.
+- Lista clicable: cada fila muestra `label`, `tipo`, `área`, `recámaras`, `precio` y `status pill`. Tap una fila → abre el sheet de detalle existente (precio + WhatsApp).
+- Nuevo evento de analytics: `unit_list_open`. `hotspot_click` ahora incluye `source: 'list'` cuando viene de la lista.
+
+### Fixed
+- **Canvas se quedaba chico tras activar fullscreen** en Brave/Bing/Edge móvil (banda negra lateral). Agregado listener `resize` + `fullscreenchange` que recalcula `renderer.setSize` y `camera.aspect` con la nueva geometría. También `setTimeout(resize, 200)` defensivo tras `start()`.
+
+---
+
 ## [v0.8.3] — 2026-05-29 · Fullscreen real + suavizado de tracking MindAR
 
 ### Added

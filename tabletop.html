@@ -166,27 +166,29 @@
     .ar-actions button:hover { border-color: var(--orange); color: var(--orange); }
     .ar-actions button.active { border-color: var(--orange); color: var(--orange); }
 
-    /* AR hotspots layer */
-    #ar-hotspots {
-      position: absolute; inset: 0; z-index: 4;
-      pointer-events: none;
+    /* Unit list sheet (lista de unidades dentro del sheet) */
+    .unit-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 4px; }
+    .unit-row {
+      display: grid; grid-template-columns: 70px 1fr auto;
+      gap: 12px; align-items: center;
+      background: var(--bg-3); border: none;
+      padding: 12px 14px; cursor: pointer;
+      font-family: inherit; color: var(--fg); text-align: left;
+      transition: background .15s;
     }
-    .ar-hotspot {
-      position: absolute;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--orange); border: 3px solid var(--fg);
-      cursor: pointer; padding: 0;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 0 8px rgba(217,119,6,0.25);
-      transition: transform 0.15s, box-shadow 0.15s, opacity .2s;
-      transform: translate(-50%, -50%);
-      pointer-events: auto;
-      opacity: 0;
+    .unit-row:hover { background: var(--bg-2); }
+    .unit-row .ur-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+    .unit-row .ur-meta { font-size: 11px; color: var(--fg-dim); line-height: 1.4; }
+    .unit-row .ur-meta .ur-price { color: var(--orange); font-weight: 700; }
+    .unit-row .ur-pill {
+      display: inline-block; font-size: 9px; padding: 3px 8px;
+      letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+      border: 1px solid; line-height: 1.5;
     }
-    .ar-hotspot.visible { opacity: 1; }
-    .ar-hotspot:hover { transform: translate(-50%, -50%) scale(1.18); }
-    .ar-hotspot[data-status="apartado"] { background: var(--amber); box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 0 8px rgba(212,160,23,0.25); }
-    .ar-hotspot[data-status="vendido"]  { background: var(--red);   box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 0 8px rgba(207,58,58,0.25); }
-    .ar-hotspot[data-status="amenidad"] { background: var(--fg);    box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 0 8px rgba(255,255,255,0.2); }
+    .unit-row .ur-pill.disponible { color: var(--green); border-color: var(--green); }
+    .unit-row .ur-pill.apartado   { color: var(--amber); border-color: var(--amber); }
+    .unit-row .ur-pill.vendido    { color: var(--red);   border-color: var(--red); }
+    .unit-row .ur-pill.amenidad   { color: var(--fg);    border-color: var(--fg); }
 
     .ar-help {
       position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -282,7 +284,7 @@
   <div id="pre-ar">
     <header>
       <div class="logo-wrap"><img src="assets/logo-teckio-light.svg" alt="Teckio" /></div>
-      <span class="meta">Demo AR · v0.8.3<span class="mode-tag">Tabletop</span></span>
+      <span class="meta">Demo AR · v0.8.4<span class="mode-tag">Tabletop</span></span>
     </header>
 
     <main>
@@ -345,7 +347,6 @@
   <!-- AR fullscreen overlay -->
   <div id="ar-wrap">
     <div id="ar-container"></div>
-    <div id="ar-hotspots"></div>
 
     <div class="ar-top">
       <div class="ar-status" id="ar-status">
@@ -353,6 +354,7 @@
         <span id="ar-status-text">Buscando marcador…</span>
       </div>
       <div class="ar-actions">
+        <button id="btn-units-ar" type="button" title="Ver unidades">Unidades</button>
         <button id="btn-light-ar" type="button" title="Día/Noche">☀</button>
         <button id="btn-exit-ar" type="button" title="Salir AR">✕</button>
       </div>
@@ -495,12 +497,10 @@
   let arActive = false;
   let arGroup = null;             // anchor group (rotated -PI/2)
   let modelObj = null;            // loaded glTF scene
-  let hotspotAnchors = [];        // [{ obj3d, dom, data }]
   let lightHemi = null, lightDir = null;
   let nightModeAR = false;
 
   const arWrap = document.getElementById('ar-wrap');
-  const arHotspots = document.getElementById('ar-hotspots');
   const arStatusEl = document.getElementById('ar-status');
   const arStatusText = document.getElementById('ar-status-text');
   const arHelp = document.getElementById('ar-help');
@@ -512,6 +512,7 @@
   });
 
   document.getElementById('btn-exit-ar').addEventListener('click', exitAR);
+  document.getElementById('btn-units-ar').addEventListener('click', openUnitListSheet);
 
   document.getElementById('btn-light-ar').addEventListener('click', () => {
     nightModeAR = !nightModeAR;
@@ -667,8 +668,6 @@
         loader.load(project.modelGlb, (gltf) => {
           modelObj = gltf.scene;
           arGroup.add(modelObj);
-          // Crear hotspots como Object3D anclados al grupo
-          buildHotspots();
         }, undefined, (err) => {
           console.error('Error cargando modelo:', err);
           arStatusText.textContent = 'Error cargando modelo';
@@ -677,9 +676,10 @@
         // Iniciar
         await mindarThree.start();
         renderer.setAnimationLoop(() => {
-          updateHotspotPositions();
           renderer.render(scene, camera);
         });
+        // Forzar resize después de fullscreen (canvas se queda chico si fullscreen pegó después de start)
+        setTimeout(() => resizeARCanvas(), 200);
       } catch (e) {
         console.error('MindAR error:', e);
         const eStr = String(e).substring(0,200);
@@ -699,12 +699,29 @@
       // Reiniciar sin reconstruir
       await mindarThree.start();
       mindarThree.renderer.setAnimationLoop(() => {
-        updateHotspotPositions();
         mindarThree.renderer.render(mindarThree.scene, mindarThree.camera);
       });
+      setTimeout(() => resizeARCanvas(), 200);
     }
     arActive = true;
   }
+
+  /* Recalcular tamaño del canvas — útil tras fullscreen / rotación */
+  function resizeARCanvas() {
+    if (!mindarThree || !mindarThree.renderer) return;
+    const w = window.innerWidth, h = window.innerHeight;
+    try {
+      mindarThree.renderer.setSize(w, h);
+      mindarThree.renderer.setPixelRatio(window.devicePixelRatio || 1);
+      if (mindarThree.camera) {
+        mindarThree.camera.aspect = w / h;
+        mindarThree.camera.updateProjectionMatrix();
+      }
+    } catch(_) {}
+  }
+  window.addEventListener('resize', resizeARCanvas);
+  document.addEventListener('fullscreenchange', () => setTimeout(resizeARCanvas, 100));
+  document.addEventListener('webkitfullscreenchange', () => setTimeout(resizeARCanvas, 100));
 
   function exitAR() {
     track('ar_end');
@@ -722,53 +739,44 @@
     arHelp.innerHTML = 'Apunta el celular al marcador impreso. Mantén el marcador completo en cuadro.';
     arHelp.classList.remove('hidden');
     arStatusText.textContent = 'Buscando marcador…';
-    // Limpia hotspots DOM
-    arHotspots.innerHTML = '';
-    hotspotAnchors = [];
     if (modelObj && arGroup) { arGroup.remove(modelObj); modelObj = null; }
     mindarThree = null;
   }
 
-  function buildHotspots() {
-    arHotspots.innerHTML = '';
-    hotspotAnchors = [];
-    project.hotspotsMarker.forEach((h) => {
-      const obj = new THREE.Object3D();
-      obj.position.set(h.x, h.y, h.z);
-      arGroup.add(obj);
-      const dom = document.createElement('button');
-      dom.className = 'ar-hotspot';
-      dom.dataset.status = h.status;
-      dom.dataset.unit = h.unit;
-      dom.addEventListener('click', (e) => {
-        e.stopPropagation();
-        track('hotspot_click', { unit: h.unit, status: h.status });
-        openSheet(h.unit);
+  /* ==========================================================================
+     LISTA DE UNIDADES — abre desde botón "Unidades" en ar-top
+     Reemplaza los hotspots flotantes en AR — más limpio visualmente.
+     ========================================================================== */
+  function openUnitListSheet() {
+    const u = project.units;
+    const rows = Object.entries(u).map(([id, unit]) => {
+      const isAmen = !!unit.amenidades;
+      const status = unit.status || 'amenidad';
+      const meta = isAmen
+        ? `${unit.floor} · ${unit.amenities.length} amenidades`
+        : `${unit.type} · ${unit.area} m² · ${unit.bedrooms} rec · <span class="ur-price">${unit.price ? '$' + (unit.price/1000000).toFixed(1) + 'M' : ''}</span>`;
+      return `
+        <button class="unit-row" data-unit="${id}">
+          <span class="ur-label">${unit.label}</span>
+          <span class="ur-meta">${meta}</span>
+          <span class="ur-pill ${status}">${status}</span>
+        </button>`;
+    }).join('');
+    sheetContent.innerHTML = `
+      <div class="sheet-header"><span class="sheet-id">Unidades</span></div>
+      <div class="sheet-type">${Object.keys(u).length} unidades disponibles · toca para ver detalles</div>
+      <div class="unit-list">${rows}</div>
+    `;
+    sheet.classList.add('open');
+    backdrop.classList.add('open');
+    track('unit_list_open');
+    // wire clicks
+    sheetContent.querySelectorAll('.unit-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const uid = row.dataset.unit;
+        track('hotspot_click', { unit: uid, source: 'list' });
+        openSheet(uid);
       });
-      arHotspots.appendChild(dom);
-      hotspotAnchors.push({ obj, dom, data: h });
-    });
-  }
-
-  function updateHotspotPositions() {
-    if (!mindarThree || hotspotAnchors.length === 0) return;
-    const camera = mindarThree.camera;
-    const w = window.innerWidth, hh = window.innerHeight;
-    const v = new THREE.Vector3();
-    hotspotAnchors.forEach(({ obj, dom }) => {
-      obj.getWorldPosition(v);
-      v.project(camera);
-      // Visible si z entre -1 y 1 y x,y en rango
-      const visible = v.z > -1 && v.z < 1 && Math.abs(v.x) < 1.2 && Math.abs(v.y) < 1.2;
-      if (visible) {
-        const x = (v.x * 0.5 + 0.5) * w;
-        const y = (-v.y * 0.5 + 0.5) * hh;
-        dom.style.left = `${x}px`;
-        dom.style.top = `${y}px`;
-        dom.classList.add('visible');
-      } else {
-        dom.classList.remove('visible');
-      }
     });
   }
 
