@@ -13,7 +13,7 @@ const scene = new THREE.Scene();
 const matBase   = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.85, metalness: 0.05 });
 const matTorre  = new THREE.MeshStandardMaterial({ color: 0xbfbfbf, roughness: 0.45, metalness: 0.15 });
 const matEdif   = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.55, metalness: 0.10 });
-const matAcento = new THREE.MeshStandardMaterial({ color: 0xd97757, roughness: 0.5,  metalness: 0.2  }); // acento sutil
+const matAcento = new THREE.MeshStandardMaterial({ color: 0xD97706, roughness: 0.5,  metalness: 0.2  }); // naranja Teckio
 
 // Base / plaza
 const base = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.01, 0.6), matBase);
