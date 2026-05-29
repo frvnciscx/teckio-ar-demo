@@ -4,7 +4,7 @@ Página estática que muestra una maqueta arquitectónica en AR sobre superficie
 
 **URL de deploy:** `https://frvnciscx.github.io/teckio-ar-demo/`
 
-**Versión actual:** v0.6 — ver [CHANGELOG.md](./CHANGELOG.md) para historial.
+**Versión actual:** v0.7 — ver [CHANGELOG.md](./CHANGELOG.md) para historial.
 
 ---
 
@@ -262,16 +262,21 @@ Para reubicar: edita `data-position` de cada `<button slot="hotspot-...">` en `i
 
 ## Roadmap (no implementado, en orden de valor)
 
-**Tier 2 — wow factor presentación:**
-- Material variants (toggle fachada blanca/terracota/gris vía KHR_materials_variants)
-- Sun study slider (hora del día → sombras reales)
-- Camera presets (botones fachada/aérea/planta)
-- Floor exploder (animación que separa pisos)
+**Implementado en v0.7:**
+- ✅ Camera presets (4 vistas)
+- ✅ Tour automático cinemático
+- ✅ Toggle Día / Noche
+- ✅ Modo medir (tap 2 puntos)
+
+**Tier 2 — wow factor presentación (pendiente, requiere autoría de assets):**
+- Material variants (toggle fachada blanca/terracota/gris vía KHR_materials_variants) — requiere `.glb` autorizado en Blender
+- Sun study slider (hora del día → sombras realistas) — limitado en model-viewer, calidad-Revit requiere rebuild en Three.js puro
+- Floor exploder (animación que separa pisos) — requiere autoría de animación en Blender
 
 **Tier 3 — nice to have:**
 - PDF brochure download desde el sheet
-- Modo medir (tocar 2 puntos, mostrar distancia)
-- Floorplan 2D overlay toggle
+- Floorplan 2D overlay toggle (requiere SVG/PNG del plano)
+- Hotspots ricos con fotos/video por unidad (requiere assets de Teckio)
 
 **Descartado:**
 - App nativa — friction kills funnel, ROI negativo vs web AR para visualización inmobiliaria. Reabrir solo si Teckio firma contrato de proyecto grande y quiere asset propio en stores.

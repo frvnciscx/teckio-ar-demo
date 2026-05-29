@@ -291,6 +291,84 @@
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
     }
 
+    /* ===== Controls (camera / tour / lighting / measure) ===== */
+    .controls {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--line);
+      border: 1px solid var(--line); border-top: none;
+      margin-bottom: 16px;
+    }
+    .ctrl-btn {
+      background: var(--bg-2); color: var(--fg);
+      border: none; padding: 10px 8px;
+      font-family: inherit; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; position: relative;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background .15s, color .15s;
+    }
+    .ctrl-btn:hover { background: var(--bg-3); color: var(--orange); }
+    .ctrl-btn.active { background: var(--bg-3); color: var(--orange); }
+    .ctrl-btn .ctrl-ico { font-size: 14px; line-height: 1; }
+    .ctrl-btn .ctrl-lbl { font-size: 9px; }
+
+    .preset-menu {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--bg-3); border: 1px solid var(--orange);
+      border-top: none; z-index: 30;
+      display: none;
+    }
+    .preset-menu.open { display: block; }
+    .preset-menu button {
+      display: block; width: 100%;
+      background: transparent; border: none; color: var(--fg);
+      padding: 10px; text-align: left;
+      font-family: inherit; font-size: 11px;
+      letter-spacing: 0.06em; cursor: pointer;
+      border-bottom: 1px solid var(--line);
+      transition: color .15s, background .15s;
+    }
+    .preset-menu button:last-child { border-bottom: none; }
+    .preset-menu button:hover { color: var(--orange); background: rgba(217,119,6,0.08); }
+
+    .measure-panel {
+      position: absolute; top: 12px; left: 12px;
+      background: var(--bg-3); border: 1px solid var(--orange);
+      padding: 10px 14px; z-index: 25;
+      font-size: 11px; letter-spacing: 0.06em;
+      display: none; max-width: 240px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    }
+    .measure-panel.open { display: block; }
+    .measure-panel .m-step { color: var(--fg-dim); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+    .measure-panel .m-val  { color: var(--orange); font-size: 18px; font-weight: 700; }
+    .measure-panel .m-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .measure-panel .m-actions button {
+      flex: 1; background: transparent; color: var(--fg-dim);
+      border: 1px solid var(--line); padding: 4px 8px;
+      font-family: inherit; font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .measure-panel .m-actions button:hover { color: var(--orange); border-color: var(--orange); }
+
+    /* Hotspots de medición (puntos azules naranja chiquito) */
+    .hotspot.measure-pt {
+      width: 14px; height: 14px;
+      background: var(--orange); border: 2px solid var(--fg);
+      box-shadow: 0 0 0 4px rgba(217,119,6,0.4);
+    }
+
+    /* Viewer en modo noche: tint sutil sobre el canvas */
+    .viewer-wrap.night::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(10,20,40,0.35), rgba(0,5,20,0.15));
+      pointer-events: none; z-index: 5;
+    }
+    /* Viewer en modo medir: cursor crosshair */
+    .viewer-wrap.measuring { cursor: crosshair; }
+    .viewer-wrap.measuring model-viewer { cursor: crosshair; }
+
     @media (max-width: 600px) {
       h1 { font-size: 22px; }
       .project { grid-template-columns: 1fr; padding: 18px 18px; gap: 18px; }
@@ -298,6 +376,9 @@
       .stats { grid-template-columns: repeat(2, 1fr); }
       .stat .num { font-size: 18px; }
       .lead .budget-group { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: repeat(4, 1fr); }
+      .ctrl-btn { padding: 8px 4px; }
+      .ctrl-btn .ctrl-lbl { font-size: 8px; }
     }
   </style>
 </head>
@@ -307,7 +388,7 @@
     <div class="logo-wrap">
       <img src="assets/logo-teckio-light.svg" alt="Teckio" />
     </div>
-    <span class="meta" id="meta-tag">Demo AR · v0.6</span>
+    <span class="meta" id="meta-tag">Demo AR · v0.7</span>
   </header>
 
   <main>
@@ -319,11 +400,44 @@
     <div class="stats" aria-label="Resumen de inventario">
       <div class="stat total"><span class="num" id="stat-total">—</span><span class="lbl"><span class="dot"></span>Unidades</span></div>
       <div class="stat avail"><span class="num" id="stat-avail">—</span><span class="lbl"><span class="dot"></span>Disponibles</span></div>
-      <div class="stat hold"><span class="num"  id="stat-hold">—</span><span class="lbl"><span class="dot"></span>Apartadas</span></div>
+      <div class="stat hold"><span class="num"  id="stat-hold">—</span><span class="lbl"><span class="dot"></span>Apartadas</span></div><!-- noop -->
       <div class="stat sold"><span class="num"  id="stat-sold">—</span><span class="lbl"><span class="dot"></span>Vendidas</span></div>
     </div>
 
-    <div class="viewer-wrap">
+    <div class="controls" role="toolbar" aria-label="Controles del modelo">
+      <button class="ctrl-btn" id="btn-views" type="button">
+        <span class="ctrl-ico">◇</span>
+        <span class="ctrl-lbl">Vista</span>
+        <div class="preset-menu" id="preset-menu">
+          <button data-preset="iso">Isométrica</button>
+          <button data-preset="front">Fachada</button>
+          <button data-preset="side">Lateral</button>
+          <button data-preset="top">Vista aérea</button>
+        </div>
+      </button>
+      <button class="ctrl-btn" id="btn-tour" type="button">
+        <span class="ctrl-ico" id="tour-ico">▶</span>
+        <span class="ctrl-lbl" id="tour-lbl">Tour</span>
+      </button>
+      <button class="ctrl-btn" id="btn-light" type="button">
+        <span class="ctrl-ico" id="light-ico">☀</span>
+        <span class="ctrl-lbl" id="light-lbl">Día</span>
+      </button>
+      <button class="ctrl-btn" id="btn-measure" type="button">
+        <span class="ctrl-ico">⊢⊣</span>
+        <span class="ctrl-lbl">Medir</span>
+      </button>
+    </div>
+
+    <div class="viewer-wrap" id="viewer-wrap">
+      <div class="measure-panel" id="measure-panel">
+        <div class="m-step" id="m-step">Toca el primer punto</div>
+        <div class="m-val" id="m-val" hidden>—</div>
+        <div class="m-actions">
+          <button id="m-reset">Reiniciar</button>
+          <button id="m-close">Cerrar</button>
+        </div>
+      </div>
       <model-viewer
         id="mv"
         alt="Maqueta arquitectónica"
@@ -768,6 +882,220 @@
     if (e.key === 'Escape') {
       if (leadModal.classList.contains('open')) { track('lead_form_close'); closeLead(); }
       if (sheet.classList.contains('open')) closeSheetFn();
+    }
+  });
+
+  /* ==========================================================================
+     CAMERA PRESETS — 4 vistas con animación nativa (model-viewer interpola)
+     ========================================================================== */
+  const CAMERA_PRESETS = {
+    iso:   { orbit: '-45deg 65deg 1.5m', label: 'Isométrica' },
+    front: { orbit: '0deg 90deg 1.5m',   label: 'Fachada' },
+    side:  { orbit: '90deg 75deg 1.6m',  label: 'Lateral' },
+    top:   { orbit: '0deg 0deg 1.8m',    label: 'Vista aérea' },
+  };
+  const viewerWrap = document.getElementById('viewer-wrap');
+  const btnViews = document.getElementById('btn-views');
+  const presetMenu = document.getElementById('preset-menu');
+  btnViews.addEventListener('click', (e) => {
+    e.stopPropagation();
+    presetMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', () => presetMenu.classList.remove('open'));
+  presetMenu.addEventListener('click', (e) => e.stopPropagation());
+  presetMenu.querySelectorAll('button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const key = b.dataset.preset;
+      const p = CAMERA_PRESETS[key];
+      if (!p) return;
+      // pausar auto-rotate y tour si estaban
+      mv.autoRotate = false;
+      stopTour();
+      mv.setAttribute('camera-orbit', p.orbit);
+      mv.cameraOrbit = p.orbit;
+      presetMenu.classList.remove('open');
+      track('view_preset_click', { preset: key });
+    });
+  });
+
+  /* ==========================================================================
+     TOUR AUTOMÁTICO — secuencia cinemática 5 vistas, ~12s
+     ========================================================================== */
+  const TOUR_STEPS = [
+    { orbit: '0deg 90deg 1.5m',   dur: 2200 },  // fachada
+    { orbit: '60deg 80deg 1.6m',  dur: 2200 },  // lateral derecha
+    { orbit: '180deg 90deg 1.5m', dur: 2400 },  // trasera
+    { orbit: '-60deg 80deg 1.6m', dur: 2200 },  // lateral izquierda
+    { orbit: '0deg 0deg 1.9m',    dur: 2400 },  // aérea
+    { orbit: '-45deg 65deg 1.5m', dur: 2000 },  // regreso a iso
+  ];
+  let tourTimers = [];
+  let tourActive = false;
+  const btnTour = document.getElementById('btn-tour');
+  const tourIco = document.getElementById('tour-ico');
+  const tourLbl = document.getElementById('tour-lbl');
+
+  function startTour() {
+    if (tourActive) return;
+    tourActive = true;
+    mv.autoRotate = false;
+    btnTour.classList.add('active');
+    tourIco.textContent = '■';
+    tourLbl.textContent = 'Stop';
+    track('tour_start');
+    let acc = 0;
+    TOUR_STEPS.forEach((step) => {
+      tourTimers.push(setTimeout(() => {
+        if (!tourActive) return;
+        mv.setAttribute('camera-orbit', step.orbit);
+        mv.cameraOrbit = step.orbit;
+      }, acc));
+      acc += step.dur;
+    });
+    tourTimers.push(setTimeout(() => { if (tourActive) stopTour(); }, acc));
+  }
+  function stopTour() {
+    if (!tourActive) return;
+    tourActive = false;
+    tourTimers.forEach(clearTimeout);
+    tourTimers = [];
+    btnTour.classList.remove('active');
+    tourIco.textContent = '▶';
+    tourLbl.textContent = 'Tour';
+    track('tour_stop');
+  }
+  btnTour.addEventListener('click', () => tourActive ? stopTour() : startTour());
+
+  /* ==========================================================================
+     DÍA / NOCHE — exposure + shadow + tint overlay
+     ========================================================================== */
+  let nightMode = false;
+  const btnLight = document.getElementById('btn-light');
+  const lightIco = document.getElementById('light-ico');
+  const lightLbl = document.getElementById('light-lbl');
+
+  function applyLighting() {
+    if (nightMode) {
+      mv.setAttribute('exposure', '0.45');
+      mv.setAttribute('shadow-intensity', '0.35');
+      viewerWrap.classList.add('night');
+      lightIco.textContent = '☾';
+      lightLbl.textContent = 'Noche';
+      btnLight.classList.add('active');
+    } else {
+      mv.setAttribute('exposure', '1.05');
+      mv.setAttribute('shadow-intensity', '0.95');
+      viewerWrap.classList.remove('night');
+      lightIco.textContent = '☀';
+      lightLbl.textContent = 'Día';
+      btnLight.classList.remove('active');
+    }
+  }
+  btnLight.addEventListener('click', () => {
+    nightMode = !nightMode;
+    applyLighting();
+    track('lighting_toggle', { mode: nightMode ? 'night' : 'day' });
+  });
+
+  /* ==========================================================================
+     MODO MEDIR — tap 2 puntos → distancia en m
+     ========================================================================== */
+  let measureMode = false;
+  let measurePoints = [];
+  const btnMeasure = document.getElementById('btn-measure');
+  const measurePanel = document.getElementById('measure-panel');
+  const mStep = document.getElementById('m-step');
+  const mVal = document.getElementById('m-val');
+
+  function enterMeasure() {
+    measureMode = true;
+    measurePoints = [];
+    btnMeasure.classList.add('active');
+    viewerWrap.classList.add('measuring');
+    measurePanel.classList.add('open');
+    mStep.textContent = 'Toca el primer punto';
+    mStep.hidden = false;
+    mVal.hidden = true;
+    // ocultar hotspots para no estorbar
+    document.querySelectorAll('.hotspot:not(.measure-pt)').forEach(h => h.dataset._hide = '1');
+    document.querySelectorAll('.hotspot:not(.measure-pt)').forEach(h => h.style.display = 'none');
+    mv.autoRotate = false;
+    stopTour();
+    track('measure_start');
+  }
+  function exitMeasure() {
+    measureMode = false;
+    btnMeasure.classList.remove('active');
+    viewerWrap.classList.remove('measuring');
+    measurePanel.classList.remove('open');
+    // limpiar puntos
+    document.querySelectorAll('.hotspot.measure-pt').forEach(el => el.remove());
+    measurePoints = [];
+    // restaurar hotspots normales
+    document.querySelectorAll('.hotspot:not(.measure-pt)').forEach(h => h.style.display = '');
+    track('measure_cancel');
+  }
+  function resetMeasure() {
+    document.querySelectorAll('.hotspot.measure-pt').forEach(el => el.remove());
+    measurePoints = [];
+    mStep.textContent = 'Toca el primer punto';
+    mStep.hidden = false;
+    mVal.hidden = true;
+  }
+  btnMeasure.addEventListener('click', () => measureMode ? exitMeasure() : enterMeasure());
+  document.getElementById('m-close').addEventListener('click', exitMeasure);
+  document.getElementById('m-reset').addEventListener('click', resetMeasure);
+
+  // Capturar clicks sobre el model-viewer en modo medir
+  mv.addEventListener('click', (e) => {
+    if (!measureMode) return;
+    // Ignorar clicks sobre el botón AR
+    if (e.target.closest('.ar-btn')) return;
+    const rect = mv.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const hit = mv.positionAndNormalFromPoint(x, y);
+    if (!hit) return;
+    const pos = hit.position;
+    const idx = measurePoints.length;
+    measurePoints.push(pos);
+
+    // crear hotspot visual en ese punto
+    const pt = document.createElement('button');
+    pt.className = 'hotspot measure-pt';
+    pt.setAttribute('slot', `hotspot-measure-${idx}-${Date.now()}`);
+    pt.setAttribute('data-position', `${pos.x} ${pos.y} ${pos.z}`);
+    pt.setAttribute('data-normal', `${hit.normal.x} ${hit.normal.y} ${hit.normal.z}`);
+    pt.setAttribute('data-visibility-attribute', 'visible');
+    mv.appendChild(pt);
+
+    if (measurePoints.length === 1) {
+      mStep.textContent = 'Toca el segundo punto';
+    } else if (measurePoints.length === 2) {
+      const a = measurePoints[0], b = measurePoints[1];
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+      // Importante: el modelo está escalado 0.02× (root wrapper). Las coords vienen
+      // YA en el espacio mundial post-escala. Para mostrar la medida REAL del edificio,
+      // multiplicamos por 50 (= 1/0.02) para convertir de "maqueta" a metros reales.
+      const distScaled = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      const distReal = distScaled * 50;
+      mStep.hidden = true;
+      mVal.hidden = false;
+      mVal.textContent = `${distReal.toFixed(2)} m`;
+      track('measure_complete', { distance_m: parseFloat(distReal.toFixed(2)) });
+    } else {
+      // tercer click → reiniciar y empezar de nuevo
+      resetMeasure();
+      // re-agregar este punto
+      const newPt = document.createElement('button');
+      newPt.className = 'hotspot measure-pt';
+      newPt.setAttribute('slot', `hotspot-measure-0-${Date.now()}`);
+      newPt.setAttribute('data-position', `${pos.x} ${pos.y} ${pos.z}`);
+      newPt.setAttribute('data-normal', `${hit.normal.x} ${hit.normal.y} ${hit.normal.z}`);
+      newPt.setAttribute('data-visibility-attribute', 'visible');
+      mv.appendChild(newPt);
+      measurePoints = [pos];
+      mStep.textContent = 'Toca el segundo punto';
     }
   });
 

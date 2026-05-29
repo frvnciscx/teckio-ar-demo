@@ -4,6 +4,20 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.7] — 2026-05-29 · Wow factor — Controls (Vista / Tour / Día-Noche / Medir)
+
+### Added
+- **Camera presets** — toolbar con botón "Vista" que abre menú con 4 ángulos predefinidos (Isométrica, Fachada, Lateral, Vista aérea). Transición animada nativa.
+- **Tour automático** — secuencia cinemática de 6 vistas en ~14s (fachada → laterales → trasera → aérea → iso). Botón toggle Start/Stop. Pausa auto-rotate durante tour.
+- **Toggle Día / Noche** — cambia `exposure` (1.05 ↔ 0.45) y `shadow-intensity` (0.95 ↔ 0.35) + overlay azul oscuro sobre el viewer en modo noche.
+- **Modo medir** — toggle que entra a estado "crosshair". Tap 2 puntos sobre el modelo → calcula distancia con `positionAndNormalFromPoint()` API y la **multiplica ×50** para mostrar la medida REAL del edificio (compensa el escalado 0.02× del modelo). Markers dinámicos en cada punto. Reset / Cerrar.
+- **4 nuevos eventos de analytics:** `view_preset_click`, `tour_start`, `tour_stop`, `lighting_toggle`, `measure_start`, `measure_complete` (con `distance_m`), `measure_cancel`.
+
+### Changed
+- Toolbar visualmente integrada bajo la stats bar — mismo grid de 4 columnas, mismo lenguaje visual.
+
+---
+
 ## [v0.6] — 2026-05-29 · Multi-proyecto + Lead Capture + Analytics
 
 ### Added
@@ -106,6 +120,7 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+[v0.7]: ./CHANGELOG.md#v07--2026-05-29--wow-factor--controls-vista--tour--dia-noche--medir
 [v0.6]: ./CHANGELOG.md#v06--2026-05-29--multi-proyecto--lead-capture--analytics
 [v0.5]: ./CHANGELOG.md#v05--2026-05-29--escala-maqueta--ux-hotspots
 [v0.4]: ./CHANGELOG.md#v04--2026-05-29--hotspots--inventario--whatsapp-por-unidad
