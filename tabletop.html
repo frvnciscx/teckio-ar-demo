@@ -7,11 +7,11 @@
   <meta name="theme-color" content="#1E3A5F" />
   <meta name="description" id="page-desc" content="Tabletop AR con marcador físico — Teckio." />
 
-  <!-- Three.js (versión exacta que MindAR 1.2.5 requiere) -->
+  <!-- Three.js (bundled compatible con MindAR 1.1.5 — versión global con window.MINDAR) -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/loaders/GLTFLoader.js"></script>
-  <!-- MindAR -->
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"></script>
+  <!-- MindAR v1.1.5 — última versión que expone window.MINDAR.IMAGE (no requiere importmap/ESM) -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-three.prod.js"></script>
 
   <!-- Datos compartidos con index.html -->
   <script src="assets/js/projects.js"></script>
@@ -282,7 +282,7 @@
   <div id="pre-ar">
     <header>
       <div class="logo-wrap"><img src="assets/logo-teckio-light.svg" alt="Teckio" /></div>
-      <span class="meta">Demo AR · v0.8.1<span class="mode-tag">Tabletop</span></span>
+      <span class="meta">Demo AR · v0.8.2<span class="mode-tag">Tabletop</span></span>
     </header>
 
     <main>
@@ -608,6 +608,10 @@
 
     if (!mindarThree) {
       try {
+        // Validar que MindAR cargó (Brave/extensiones a veces bloquean CDN)
+        if (!window.MINDAR || !window.MINDAR.IMAGE) {
+          throw new Error('MindAR script no cargó. ¿Bloqueado por adblock o Brave Shields? Desactiva escudos para este sitio o usa Chrome/Safari.');
+        }
         const { MindARThree } = window.MINDAR.IMAGE;
         mindarThree = new MindARThree({
           container: document.querySelector('#ar-container'),

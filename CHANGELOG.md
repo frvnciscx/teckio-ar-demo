@@ -4,6 +4,15 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8.2] — 2026-05-29 · Fix MindAR no cargaba (downgrade 1.2.5 → 1.1.5)
+
+### Fixed
+- **Bug crítico**: MindAR v1.2.5 cambió a ES Modules y requiere importmap. El bundle `mindar-image-three.prod.js` ya no expone `window.MINDAR.IMAGE` con `<script src>` clásico. Resultado: `TypeError: Cannot read properties of undefined (reading 'IMAGE')`.
+- **Solución**: downgrade a **MindAR v1.1.5**, último build con globals. Compatible con three.js 0.140.0 (que es el que ya usábamos).
+- Guard adicional: validar `window.MINDAR && window.MINDAR.IMAGE` antes de usarlo. Mensaje de error específico si el script fue bloqueado (adblock, Brave Shields).
+
+---
+
 ## [v0.8.1] — 2026-05-29 · Hardening permisos cámara en tabletop
 
 ### Added
