@@ -4,6 +4,18 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8.3] — 2026-05-29 · Fullscreen real + suavizado de tracking MindAR
+
+### Added
+- **Fullscreen API** en `startAR()` — pide pantalla completa al navegador al entrar a AR. Elimina barras de URL/nav que cropeaban la vista en Brave/Chrome/Safari mobile.
+- **Exit fullscreen** en `exitAR()` — sale limpio al regresar.
+
+### Changed
+- **MindAR config con filtros suavizados**: `filterMinCF: 0.0001`, `filterBeta: 0.001`. Valores bajos = pose estimada con más smoothing, menos jitter. Trade-off: ~50ms más de latencia, aceptable para tabletop.
+- `warmupTolerance: 5` y `missTolerance: 5` — el modelo no parpadea cuando el marcador se pierde momentáneamente (movimiento de cámara, oclusión parcial).
+
+---
+
 ## [v0.8.2] — 2026-05-29 · Fix MindAR no cargaba (downgrade 1.2.5 → 1.1.5)
 
 ### Fixed

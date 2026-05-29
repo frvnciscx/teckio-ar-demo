@@ -282,7 +282,7 @@
   <div id="pre-ar">
     <header>
       <div class="logo-wrap"><img src="assets/logo-teckio-light.svg" alt="Teckio" /></div>
-      <span class="meta">Demo AR · v0.8.2<span class="mode-tag">Tabletop</span></span>
+      <span class="meta">Demo AR · v0.8.3<span class="mode-tag">Tabletop</span></span>
     </header>
 
     <main>
@@ -589,6 +589,14 @@
     arStatusEl.classList.remove('found');
     arStatusText.textContent = 'Solicitando permiso de cámara…';
 
+    // Request fullscreen (best effort — kills barras del navegador)
+    try {
+      const el = arWrap;
+      if (el.requestFullscreen)            await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen)     el.msRequestFullscreen();
+    } catch(_) { /* algunos navegadores no permiten, no es crítico */ }
+
     // 1. Pre-flight: pedir permiso de cámara con prompt nativo
     try {
       await requestCameraPermission();
@@ -619,6 +627,12 @@
           uiScanning: 'no',
           uiLoading: 'no',
           uiError: 'no',
+          // Filtros de pose — valores bajos = más suave, menos jitter (pero un poco menos responsivo)
+          filterMinCF: 0.0001,
+          filterBeta:  0.001,
+          // Tolerancias — más alto = menos parpadeo al perder/recuperar marcador
+          warmupTolerance: 5,
+          missTolerance:   5,
         });
         const { renderer, scene, camera } = mindarThree;
         renderer.setPixelRatio(window.devicePixelRatio || 1);
@@ -695,6 +709,11 @@
   function exitAR() {
     track('ar_end');
     try { if (mindarThree) { mindarThree.stop(); mindarThree.renderer.setAnimationLoop(null); } } catch(_) {}
+    // Salir de fullscreen si estaba activo
+    try {
+      if (document.fullscreenElement && document.exitFullscreen)               document.exitFullscreen();
+      else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+    } catch(_) {}
     arWrap.classList.remove('active');
     arActive = false;
     // reset error styling
