@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Teckio · Residencial Altavía · Maqueta AR</title>
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="theme-color" content="#003F8A" />
   <meta name="description" content="Visualización AR del Residencial Altavía — Grupo Teckio." />
 
   <!-- model-viewer (Google) -->
@@ -12,16 +12,14 @@
 
   <style>
     :root {
-      --bg:        #0a0a0a;
-      --bg-2:      #111;
-      --bg-3:      #181818;
-      --fg:        #e6e6e6;
-      --fg-dim:    #8a8a8a;
-      --line:      #1f1f1f;
-      --navy:      #003F8A;
-      --navy-2:    #0E4A90;
+      --bg:        #003F8A;
+      --bg-2:      #0a4a98;   /* panel ligeramente más claro */
+      --bg-3:      #002f6b;   /* panel más oscuro */
+      --fg:        #ffffff;
+      --fg-dim:    #a8c0e0;
+      --line:      #0e5aae;
       --orange:    #D97706;
-      --orange-2:  #b66205;
+      --orange-2:  #f08914;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -43,18 +41,11 @@
       border-bottom: 1px solid var(--line);
       display: flex; justify-content: space-between; align-items: center;
       gap: 12px; flex-wrap: wrap;
-      background: linear-gradient(180deg, #0d0d0d 0%, var(--bg) 100%);
+      background: linear-gradient(180deg, #003575 0%, var(--bg) 100%);
     }
-    .logo-wrap {
-      display: flex; align-items: center; gap: 12px;
-    }
+    .logo-wrap { display: flex; align-items: center; }
     .logo-wrap img {
-      height: 32px; width: auto; display: block;
-      filter: drop-shadow(0 0 8px rgba(217,119,6,.08));
-    }
-    .brand-text {
-      font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-      font-size: 12px; color: var(--fg-dim);
+      height: 36px; width: auto; display: block;
     }
     .meta {
       color: var(--fg-dim); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
@@ -73,7 +64,7 @@
     }
     .sub { color: var(--fg-dim); margin: 0 0 22px; font-size: 13px; }
     .accent-line {
-      height: 1px; background: var(--orange); width: 32px; margin: 10px 0 18px;
+      height: 2px; background: var(--orange); width: 36px; margin: 10px 0 18px;
     }
 
     /* ===== Viewer ===== */
@@ -82,27 +73,28 @@
       width: 100%;
       aspect-ratio: 4 / 3;
       max-height: 70vh;
-      background: var(--bg-2);
+      background: var(--bg-3);
       border: 1px solid var(--line);
     }
     model-viewer {
       width: 100%; height: 100%;
-      background-color: var(--bg-2);
-      --poster-color: var(--bg-2);
+      background-color: var(--bg-3);
+      --poster-color: var(--bg-3);
       --progress-bar-color: var(--orange);
       --progress-bar-height: 2px;
     }
     .ar-btn {
       position: absolute;
       bottom: 16px; left: 50%; transform: translateX(-50%);
-      background: var(--orange); color: #0a0a0a;
+      background: var(--orange); color: #002f6b;
       border: none; padding: 13px 22px;
-      font-family: inherit; font-size: 12px; font-weight: 600;
+      font-family: inherit; font-size: 12px; font-weight: 700;
       letter-spacing: 0.12em; text-transform: uppercase;
       cursor: pointer;
       transition: background 0.15s ease, transform .1s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
-    .ar-btn:hover  { background: #f08914; }
+    .ar-btn:hover  { background: var(--orange-2); }
     .ar-btn:active { transform: translateX(-50%) translateY(1px); }
     .ar-btn[hidden] { display: none; }
 
@@ -139,26 +131,27 @@
     }
     .cta {
       display: inline-flex; align-items: center; gap: 10px;
-      background: var(--orange); color: #0a0a0a;
+      background: var(--orange); color: #002f6b;
       padding: 16px 28px;
-      font-family: inherit; font-size: 13px; font-weight: 600;
+      font-family: inherit; font-size: 13px; font-weight: 700;
       letter-spacing: 0.14em; text-transform: uppercase;
       border: none; border-bottom: none;
       cursor: pointer;
       transition: background 0.15s ease, transform .1s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
     .cta:hover {
-      background: #f08914; color: #0a0a0a;
+      background: var(--orange-2); color: #002f6b;
       border-bottom: none;
     }
     .cta:active { transform: translateY(1px); }
-    .cta svg { width: 14px; height: 14px; }
+    .cta svg { width: 16px; height: 16px; }
 
     /* ===== Instr ===== */
     .instr {
       margin-top: 28px;
       padding: 14px 16px;
-      background: var(--bg-2);
+      background: var(--bg-3);
       border: 1px solid var(--line);
       font-size: 11px; color: var(--fg-dim);
       letter-spacing: 0.02em;
@@ -176,6 +169,7 @@
     @media (max-width: 600px) {
       h1 { font-size: 22px; }
       .project { grid-template-columns: 1fr; padding: 18px 18px; gap: 18px; }
+      .logo-wrap img { height: 30px; }
     }
   </style>
 </head>
@@ -183,17 +177,16 @@
 
   <header>
     <div class="logo-wrap">
-      <img src="assets/logo-teckio.svg" alt="Teckio" />
-      <span class="brand-text">Grupo Teckio</span>
+      <img src="assets/logo-teckio-light.svg" alt="Teckio" />
     </div>
-    <span class="meta">Demo AR · v0.1</span>
+    <span class="meta">Demo AR · v0.2</span>
   </header>
 
   <main>
     <div class="eyebrow">Realidad Aumentada · Web</div>
     <h1>Residencial Altavía</h1>
     <div class="accent-line"></div>
-    <p class="sub">Visualiza la maqueta del desarrollo a escala sobre cualquier superficie. Toca <em>Ver en mi espacio</em> desde tu celular.</p>
+    <p class="sub">Visualiza el desarrollo a escala sobre cualquier superficie. Toca <em>Ver en mi espacio</em> desde tu celular.</p>
 
     <div class="viewer-wrap">
       <model-viewer
@@ -213,17 +206,17 @@
         interaction-prompt="auto"
         shadow-intensity="0.9"
         shadow-softness="0.8"
-        exposure="0.9"
+        exposure="0.95"
         environment-image="neutral"
-        camera-orbit="35deg 70deg 1.2m"
-        min-camera-orbit="auto auto 0.5m"
-        max-camera-orbit="auto auto 3m"
+        camera-orbit="-45deg 65deg 60m"
+        min-camera-orbit="auto auto 15m"
+        max-camera-orbit="auto auto 200m"
         field-of-view="32deg">
 
         <button slot="ar-button" class="ar-btn">Ver en mi espacio</button>
 
         <div slot="poster" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--fg-dim);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">
-          Cargando maqueta…
+          Cargando modelo…
         </div>
       </model-viewer>
     </div>
@@ -251,13 +244,10 @@
     </section>
 
     <div class="cta-wrap">
-      <!-- TODO: sustituir el mailto por tu enlace de Calendly / WhatsApp Business -->
-      <a class="cta" href="mailto:contacto@teckio.com?subject=Agendar%20demo%20Residencial%20Altav%C3%ADa&body=Hola%2C%20me%20interesa%20agendar%20una%20demo%20presencial%20del%20Residencial%20Altav%C3%ADa.">
-        Agendar demo
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square">
-          <line x1="5" y1="12" x2="19" y2="12"/>
-          <polyline points="13 6 19 12 13 18"/>
-        </svg>
+      <!-- TODO: sustituir 525555555555 por el número real de WhatsApp Teckio (con código país, sin +) -->
+      <a class="cta" href="https://wa.me/525555555555?text=Hola%2C%20me%20interesa%20agendar%20una%20demo%20del%20Residencial%20Altav%C3%ADa.">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A12 12 0 0 0 3.48 20.52L2 22l1.55-1.41A12 12 0 1 0 20.52 3.48zM12 21.27a9.27 9.27 0 0 1-4.72-1.29l-.34-.2-3.55.93.95-3.45-.22-.36A9.27 9.27 0 1 1 12 21.27zm5.14-6.92c-.28-.14-1.67-.82-1.92-.92s-.45-.14-.64.14-.74.92-.9 1.11-.34.2-.62.07a7.55 7.55 0 0 1-2.22-1.37 8.5 8.5 0 0 1-1.55-1.92c-.16-.28 0-.43.12-.57.13-.13.28-.34.42-.5a2 2 0 0 0 .28-.46.51.51 0 0 0 0-.5c-.07-.14-.64-1.54-.88-2.11s-.46-.49-.64-.5h-.55a1.05 1.05 0 0 0-.76.36 3.2 3.2 0 0 0-1 2.38c0 1.4 1 2.76 1.16 2.95s2 3.07 4.92 4.31a16.5 16.5 0 0 0 1.64.6 4 4 0 0 0 1.81.12 3 3 0 0 0 2-1.39 2.4 2.4 0 0 0 .17-1.39c-.06-.13-.24-.2-.52-.34z"/></svg>
+        Agendar demo por WhatsApp
       </a>
     </div>
 
