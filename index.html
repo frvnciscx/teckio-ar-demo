@@ -295,7 +295,7 @@
     <div class="logo-wrap">
       <img src="assets/logo-teckio-light.svg" alt="Teckio" />
     </div>
-    <span class="meta">Demo AR · v0.4</span>
+    <span class="meta">Demo AR · v0.5</span>
   </header>
 
   <main>
@@ -314,8 +314,8 @@
     <div class="viewer-wrap">
       <model-viewer
         id="mv"
-        src="assets/maqueta.glb?v=2"
-        ios-src="assets/maqueta.usdz?v=2"
+        src="assets/maqueta.glb?v=5"
+        ios-src="assets/maqueta.usdz?v=5"
         alt="Maqueta del Residencial Altavía"
         ar
         ar-modes="webxr scene-viewer quick-look"
@@ -331,20 +331,20 @@
         shadow-softness="0.8"
         exposure="0.95"
         environment-image="neutral"
-        camera-orbit="-45deg 65deg 60m"
-        min-camera-orbit="auto auto 15m"
-        max-camera-orbit="auto auto 200m"
+        camera-orbit="-45deg 65deg 1.5m"
+        min-camera-orbit="auto auto 0.4m"
+        max-camera-orbit="auto auto 5m"
         field-of-view="32deg">
 
         <button slot="ar-button" class="ar-btn">Ver en mi espacio</button>
 
-        <!-- Hotspots — posicionados sobre coords del modelo (bbox 37.72 x 9.71 x 17.68 centrado en origen XZ, Y 0..9.71) -->
-        <button slot="hotspot-PH-01" class="hotspot" data-position="15 8.5 7" data-normal="0 0 1" data-visibility-attribute="visible" data-status="disponible" data-unit="PH-01"></button>
-        <button slot="hotspot-PH-02" class="hotspot" data-position="-15 8.5 7" data-normal="0 0 1" data-visibility-attribute="visible" data-status="apartado" data-unit="PH-02"></button>
-        <button slot="hotspot-T-301" class="hotspot" data-position="10 5.5 7" data-normal="0 0 1" data-visibility-attribute="visible" data-status="disponible" data-unit="T-301"></button>
-        <button slot="hotspot-T-204" class="hotspot" data-position="-10 5.5 7" data-normal="0 0 1" data-visibility-attribute="visible" data-status="disponible" data-unit="T-204"></button>
-        <button slot="hotspot-T-105" class="hotspot" data-position="8 2.5 7" data-normal="0 0 1" data-visibility-attribute="visible" data-status="vendido" data-unit="T-105"></button>
-        <button slot="hotspot-AM-PB" class="hotspot" data-position="0 1 8" data-normal="0 0 1" data-visibility-attribute="visible" data-status="amenidad" data-unit="AM-PB"></button>
+        <!-- Hotspots — coords escaladas 0.02 vs. bbox original 37.72x9.71x17.68; ahora ~0.75x0.19x0.35 m -->
+        <button slot="hotspot-PH-01" class="hotspot" data-position="0.30 0.17 0.14" data-normal="0 0 1" data-visibility-attribute="visible" data-status="disponible" data-unit="PH-01"></button>
+        <button slot="hotspot-PH-02" class="hotspot" data-position="-0.30 0.17 0.14" data-normal="0 0 1" data-visibility-attribute="visible" data-status="apartado" data-unit="PH-02"></button>
+        <button slot="hotspot-T-301" class="hotspot" data-position="0.20 0.11 0.14" data-normal="0 0 1" data-visibility-attribute="visible" data-status="disponible" data-unit="T-301"></button>
+        <button slot="hotspot-T-204" class="hotspot" data-position="-0.20 0.11 0.14" data-normal="0 0 1" data-visibility-attribute="visible" data-status="disponible" data-unit="T-204"></button>
+        <button slot="hotspot-T-105" class="hotspot" data-position="0.16 0.05 0.14" data-normal="0 0 1" data-visibility-attribute="visible" data-status="vendido" data-unit="T-105"></button>
+        <button slot="hotspot-AM-PB" class="hotspot" data-position="0 0.02 0.16" data-normal="0 0 1" data-visibility-attribute="visible" data-status="amenidad" data-unit="AM-PB"></button>
 
         <div slot="poster" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--fg-dim);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;">
           Cargando modelo…
@@ -370,9 +370,8 @@
     </div>
 
     <div class="instr">
-      <strong>iOS:</strong> Safari abre Quick Look automáticamente. ·
-      <strong>Android:</strong> Chrome lanza Scene Viewer (Google Play Services for AR). ·
-      <strong>Desktop:</strong> arrastra para orbitar; el botón AR aparece solo en móvil.
+      <strong>Hotspots:</strong> funcionan en esta página (toca los puntos sobre el modelo). En AR son solo visualización — vuelve a la página para precios y reservar. ·
+      <strong>AR Android:</strong> Chrome + Scene Viewer · <strong>AR iOS:</strong> Safari + Quick Look · <strong>Desktop:</strong> arrastra para orbitar.
     </div>
   </main>
 
@@ -505,10 +504,22 @@
       });
     });
 
-    // === model-viewer debug ===
+    // === model-viewer wiring ===
     const mv = document.getElementById('mv');
     mv.addEventListener('error', (e) => console.error('[model-viewer] error:', e.detail));
-    mv.addEventListener('ar-status', (e) => console.log('[model-viewer] ar-status:', e.detail.status));
+
+    // Ocultar hotspots cuando se entra a AR mode (WebXR los muestra, pero Scene Viewer / Quick Look
+    // son apps nativas y los hotspots no se transfieren; mejor ocultarlos para no confundir).
+    mv.addEventListener('ar-status', (e) => {
+      const status = e.detail.status;
+      console.log('[model-viewer] ar-status:', status);
+      const inAR = status === 'session-started' || status === 'object-placed';
+      document.querySelectorAll('.hotspot').forEach((h) => {
+        h.style.display = inAR ? 'none' : '';
+      });
+      // Cerrar sheet si quedó abierto al entrar a AR
+      if (inAR) closeSheet();
+    });
   </script>
 </body>
 </html>
