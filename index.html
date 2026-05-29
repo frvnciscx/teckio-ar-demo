@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Teckio · Maqueta AR</title>
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="description" content="Visualización AR del desarrollo arquitectónico — Grupo Teckio." />
+
+  <!-- model-viewer (Google) -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-2: #111;
+      --fg: #e6e6e6;
+      --fg-dim: #8a8a8a;
+      --line: #1f1f1f;
+      --accent: #d97757;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--line); }
+    a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 12px; flex-wrap: wrap;
+    }
+    header .brand {
+      font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    header .meta {
+      color: var(--fg-dim); font-size: 12px; letter-spacing: 0.04em;
+    }
+
+    main {
+      max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px;
+    }
+    h1 {
+      font-size: 22px; font-weight: 600; letter-spacing: 0.02em;
+      margin: 0 0 6px;
+    }
+    .sub {
+      color: var(--fg-dim); margin: 0 0 20px; font-size: 13px;
+    }
+
+    .viewer-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      max-height: 70vh;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+    }
+    model-viewer {
+      width: 100%; height: 100%;
+      background-color: var(--bg-2);
+      --poster-color: var(--bg-2);
+      --progress-bar-color: var(--accent);
+      --progress-bar-height: 2px;
+    }
+
+    .ar-btn {
+      position: absolute;
+      bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: var(--fg); color: var(--bg);
+      border: none; padding: 12px 18px;
+      font-family: inherit; font-size: 13px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .ar-btn:hover { background: var(--accent); color: var(--bg); }
+
+    .ar-btn[hidden] { display: none; }
+
+    .info {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+      padding-top: 20px; border-top: 1px solid var(--line);
+    }
+    .info dt { color: var(--fg-dim); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+    .info dd { margin: 0; font-size: 13px; }
+
+    .instr {
+      margin-top: 24px;
+      padding: 14px 16px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      font-size: 12px; color: var(--fg-dim);
+    }
+    .instr strong { color: var(--fg); font-weight: 600; }
+
+    footer {
+      max-width: 1100px; margin: 0 auto; padding: 18px 20px 30px;
+      color: var(--fg-dim); font-size: 11px; letter-spacing: 0.04em;
+      border-top: 1px solid var(--line);
+    }
+
+    /* Accent line decoration */
+    .accent-line {
+      height: 1px; background: var(--accent); width: 28px; margin: 8px 0 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span class="brand">Teckio · AR</span>
+    <span class="meta">v0.1 · demo</span>
+  </header>
+
+  <main>
+    <h1>Maqueta interactiva</h1>
+    <div class="accent-line"></div>
+    <p class="sub">Toca <em>Ver en mi espacio</em> para anclar la maqueta sobre cualquier superficie.</p>
+
+    <div class="viewer-wrap">
+      <model-viewer
+        id="mv"
+        src="assets/maqueta.glb"
+        ios-src="assets/maqueta.usdz"
+        alt="Maqueta arquitectónica del desarrollo Teckio"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-scale="auto"
+        ar-placement="floor"
+        camera-controls
+        touch-action="pan-y"
+        auto-rotate
+        auto-rotate-delay="2500"
+        rotation-per-second="12deg"
+        interaction-prompt="auto"
+        shadow-intensity="0.9"
+        shadow-softness="0.8"
+        exposure="0.9"
+        environment-image="neutral"
+        camera-orbit="35deg 70deg 1.2m"
+        min-camera-orbit="auto auto 0.5m"
+        max-camera-orbit="auto auto 3m"
+        field-of-view="32deg">
+
+        <button slot="ar-button" class="ar-btn">Ver en mi espacio</button>
+
+        <div slot="poster" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--fg-dim);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">
+          Cargando maqueta…
+        </div>
+      </model-viewer>
+    </div>
+
+    <dl class="info">
+      <div>
+        <dt>Cliente</dt>
+        <dd>Grupo Teckio</dd>
+      </div>
+      <div>
+        <dt>Proyecto</dt>
+        <dd>Demo WebAR · Fase 0</dd>
+      </div>
+      <div>
+        <dt>Formato</dt>
+        <dd>glTF 2.0 / USDZ</dd>
+      </div>
+      <div>
+        <dt>Escala demo</dt>
+        <dd>~60 × 60 cm</dd>
+      </div>
+    </dl>
+
+    <div class="instr">
+      <strong>iOS:</strong> Safari abre Quick Look automáticamente. ·
+      <strong>Android:</strong> Chrome lanza Scene Viewer (Google Play Services for AR). ·
+      <strong>Desktop:</strong> arrastra para orbitar; el botón AR aparece solo en móvil.
+    </div>
+  </main>
+
+  <footer>
+    Construido para validar la viabilidad técnica de AR sin app · Demo interna.
+  </footer>
+
+  <script>
+    // Reportar errores de carga en consola (útil al debuggear iOS)
+    const mv = document.getElementById('mv');
+    mv.addEventListener('error', (e) => console.error('[model-viewer] error:', e.detail));
+    mv.addEventListener('ar-status', (e) => console.log('[model-viewer] ar-status:', e.detail.status));
+  </script>
+</body>
+</html>
