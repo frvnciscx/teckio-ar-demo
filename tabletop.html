@@ -126,14 +126,33 @@
       position: fixed; inset: 0; z-index: 100;
       background: #000;
       display: none;
+      overflow: hidden;
     }
     #ar-wrap.active { display: block; }
-    #ar-container { position: absolute; inset: 0; }
-    #ar-container > div { position: absolute !important; inset: 0; }
-    #ar-container video, #ar-container canvas {
-      position: absolute !important; inset: 0;
+    #ar-container {
+      position: absolute !important;
+      top: 0 !important; left: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      overflow: hidden;
+    }
+    /* MindAR crea contenedores internos con tamaño fijo — forzar fill TODO descendiente */
+    #ar-container > div,
+    #ar-container > div > div {
+      position: absolute !important;
+      top: 0 !important; left: 0 !important;
       width: 100% !important; height: 100% !important;
-      object-fit: cover;
+      transform: none !important;
+      margin: 0 !important; padding: 0 !important;
+    }
+    #ar-container video,
+    #ar-container canvas {
+      position: absolute !important;
+      top: 50% !important; left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      width: 100% !important; height: 100% !important;
+      min-width: 100% !important; min-height: 100% !important;
+      max-width: none !important; max-height: none !important;
+      object-fit: cover !important;
     }
 
     /* AR top bar */
@@ -284,7 +303,7 @@
   <div id="pre-ar">
     <header>
       <div class="logo-wrap"><img src="assets/logo-teckio-light.svg" alt="Teckio" /></div>
-      <span class="meta">Demo AR · v0.8.4<span class="mode-tag">Tabletop</span></span>
+      <span class="meta">Demo AR · v0.8.5<span class="mode-tag">Tabletop</span></span>
     </header>
 
     <main>
@@ -679,7 +698,7 @@
           renderer.render(scene, camera);
         });
         // Forzar resize después de fullscreen (canvas se queda chico si fullscreen pegó después de start)
-        setTimeout(() => resizeARCanvas(), 200);
+        triggerResizes();
       } catch (e) {
         console.error('MindAR error:', e);
         const eStr = String(e).substring(0,200);
@@ -706,7 +725,9 @@
     arActive = true;
   }
 
-  /* Recalcular tamaño del canvas — útil tras fullscreen / rotación */
+  /* Recalcular tamaño del canvas — útil tras fullscreen / rotación.
+     MindAR crea sus propios contenedores con tamaño fijo; les pegamos estilos
+     inline brute-force para que llenen toda la ventana. */
   function resizeARCanvas() {
     if (!mindarThree || !mindarThree.renderer) return;
     const w = window.innerWidth, h = window.innerHeight;
@@ -718,10 +739,32 @@
         mindarThree.camera.updateProjectionMatrix();
       }
     } catch(_) {}
+    // Brute-force: forzar TODOS los descendientes del contenedor a fill
+    const container = document.querySelector('#ar-container');
+    if (container) {
+      container.querySelectorAll('div, video, canvas').forEach(el => {
+        el.style.position = 'absolute';
+        el.style.top = '0';
+        el.style.left = '0';
+        el.style.width = '100%';
+        el.style.height = '100%';
+        el.style.transform = 'none';
+        if (el.tagName === 'VIDEO' || el.tagName === 'CANVAS') {
+          el.style.objectFit = 'cover';
+          el.style.minWidth = '100%';
+          el.style.minHeight = '100%';
+        }
+      });
+    }
+  }
+  // Disparar múltiples veces porque fullscreen + MindAR start no siempre acaban en orden
+  function triggerResizes() {
+    [50, 200, 500, 1000].forEach(d => setTimeout(resizeARCanvas, d));
   }
   window.addEventListener('resize', resizeARCanvas);
-  document.addEventListener('fullscreenchange', () => setTimeout(resizeARCanvas, 100));
-  document.addEventListener('webkitfullscreenchange', () => setTimeout(resizeARCanvas, 100));
+  document.addEventListener('fullscreenchange', triggerResizes);
+  document.addEventListener('webkitfullscreenchange', triggerResizes);
+  window.addEventListener('orientationchange', triggerResizes);
 
   function exitAR() {
     track('ar_end');

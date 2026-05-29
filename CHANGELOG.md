@@ -4,6 +4,17 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8.5] — 2026-05-29 · Brute-force canvas fill en MindAR (fix banda negra)
+
+### Fixed
+- **Canvas seguía cortado a la mitad** en Brave/Bing/Edge mobile pese a v0.8.3/v0.8.4. Causa: MindAR crea contenedores `<div>` internos con tamaño fijo basado en aspect ratio del video stream; mis selectores CSS no eran lo suficientemente específicos.
+- **Solución**:
+  - CSS con `width: 100vw !important; height: 100vh !important` en `#ar-container` y `width/height: 100%` con `object-fit: cover` y `transform: none` aplicado a TODOS los descendientes (`> div`, `> div > div`, `video`, `canvas`).
+  - JS adicional: tras cada `resize` / `fullscreenchange` / `orientationchange`, query a `container.querySelectorAll('div, video, canvas')` y set inline styles brute-force.
+  - Disparo múltiple de resize en 50ms, 200ms, 500ms y 1000ms tras start para cubrir orden indeterminado entre `fullscreen` + `mindarThree.start()`.
+
+---
+
 ## [v0.8.4] — 2026-05-29 · Tabletop UX — fuera hotspots flotantes, dentro botón "Unidades"
 
 ### Removed
