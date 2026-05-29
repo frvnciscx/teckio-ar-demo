@@ -282,7 +282,7 @@
   <div id="pre-ar">
     <header>
       <div class="logo-wrap"><img src="assets/logo-teckio-light.svg" alt="Teckio" /></div>
-      <span class="meta">Demo AR · v0.8<span class="mode-tag">Tabletop</span></span>
+      <span class="meta">Demo AR · v0.8.1<span class="mode-tag">Tabletop</span></span>
     </header>
 
     <main>
@@ -532,10 +532,79 @@
     }
   }
 
+  /* ==========================================================================
+     Pre-flight: detectar in-app browser y pedir permiso de cámara explícito
+     ========================================================================== */
+  function detectInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    const inApps = [
+      { name: 'WhatsApp',  re: /WhatsApp/i },
+      { name: 'Instagram', re: /Instagram/i },
+      { name: 'FBAN/FBAV', re: /FBAN|FBAV|FB_IAB/i },
+      { name: 'LinkedIn',  re: /LinkedInApp/i },
+      { name: 'Twitter',   re: /Twitter/i },
+      { name: 'TikTok',    re: /TikTok|Bytedance|musical_ly/i },
+    ];
+    for (const a of inApps) if (a.re.test(ua)) return a.name;
+    return null;
+  }
+
+  async function requestCameraPermission() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('NO_CAMERA_API');
+    }
+    if (!window.isSecureContext) {
+      throw new Error('NOT_HTTPS');
+    }
+    // Esto dispara el prompt en navegadores funcionales
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' },
+      audio: false,
+    });
+    // Cerramos inmediatamente — MindAR abrirá la suya
+    stream.getTracks().forEach(t => t.stop());
+    return true;
+  }
+
+  function arErrorMessage(err) {
+    const name = (err && err.name) || '';
+    const msg  = (err && err.message) || String(err);
+    if (msg === 'NO_CAMERA_API') return 'Tu navegador no soporta cámara web. Usa Safari (iOS) o Chrome (Android) actualizado.';
+    if (msg === 'NOT_HTTPS')     return 'La página debe servirse vía HTTPS. Revisa que la URL empiece con https://';
+    if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+      const inApp = detectInAppBrowser();
+      if (inApp) return `Estás dentro del navegador de ${inApp} que bloquea la cámara. Abre el link en Safari (iOS) o Chrome (Android) directamente.`;
+      return 'Permiso de cámara denegado. Ve a la configuración del navegador → permisos → permitir cámara para este sitio, y recarga.';
+    }
+    if (name === 'NotFoundError' || name === 'DevicesNotFoundError') return 'No se detectó cámara en este dispositivo.';
+    if (name === 'NotReadableError' || name === 'TrackStartError') return 'La cámara está siendo usada por otra app. Ciérrala e intenta de nuevo.';
+    if (name === 'OverconstrainedError') return 'No se pudo configurar la cámara trasera. Intenta de nuevo.';
+    return `Error: ${name || 'desconocido'} · ${msg.substring(0,120)}`;
+  }
+
   async function startAR() {
     if (arActive) return;
     track('ar_start');
     arWrap.classList.add('active');
+    arStatusEl.classList.remove('found');
+    arStatusText.textContent = 'Solicitando permiso de cámara…';
+
+    // 1. Pre-flight: pedir permiso de cámara con prompt nativo
+    try {
+      await requestCameraPermission();
+    } catch (e) {
+      const friendly = arErrorMessage(e);
+      arStatusText.textContent = friendly;
+      // Cambiar el panel a un estado de error más visible
+      arStatusEl.style.background = 'rgba(207,58,58,0.85)';
+      arStatusEl.style.borderColor = 'var(--red)';
+      arHelp.classList.remove('hidden');
+      arHelp.innerHTML = `<strong>No se pudo iniciar AR.</strong><br>${friendly}<br><br>Toca <span style="color:var(--orange)">✕</span> arriba a la derecha para regresar.`;
+      track('ar_failed', { stage: 'permission', error: friendly.substring(0,200) });
+      return;
+    }
+
+    arStatusText.textContent = 'Cargando AR…';
 
     if (!mindarThree) {
       try {
@@ -595,9 +664,17 @@
         });
       } catch (e) {
         console.error('MindAR error:', e);
-        track('ar_failed', { error: String(e).substring(0,200) });
-        // mostrar fallback
-        arStatusText.textContent = 'Error al iniciar AR — ¿permitiste cámara?';
+        const eStr = String(e).substring(0,200);
+        track('ar_failed', { stage: 'mindar', error: eStr });
+        let msg = `Error MindAR: ${eStr}`;
+        if (eStr.includes('marker.mind') || eStr.includes('404') || eStr.includes('Failed to fetch')) {
+          msg = 'Falta el archivo marker.mind. Compílalo en https://hiukim.github.io/mind-ar-js-doc/tools/compile/ y súbelo a assets/.';
+        }
+        arStatusText.textContent = 'Error al iniciar AR';
+        arStatusEl.style.background = 'rgba(207,58,58,0.85)';
+        arStatusEl.style.borderColor = 'var(--red)';
+        arHelp.classList.remove('hidden');
+        arHelp.innerHTML = `<strong>${msg}</strong><br>Toca <span style="color:var(--orange)">✕</span> arriba a la derecha para regresar.`;
         return;
       }
     } else {
@@ -612,15 +689,21 @@
   }
 
   function exitAR() {
-    if (!arActive) return;
     track('ar_end');
-    try { mindarThree.stop(); mindarThree.renderer.setAnimationLoop(null); } catch(_) {}
+    try { if (mindarThree) { mindarThree.stop(); mindarThree.renderer.setAnimationLoop(null); } } catch(_) {}
     arWrap.classList.remove('active');
     arActive = false;
+    // reset error styling
+    arStatusEl.style.background = '';
+    arStatusEl.style.borderColor = '';
+    arHelp.innerHTML = 'Apunta el celular al marcador impreso. Mantén el marcador completo en cuadro.';
+    arHelp.classList.remove('hidden');
+    arStatusText.textContent = 'Buscando marcador…';
     // Limpia hotspots DOM
     arHotspots.innerHTML = '';
     hotspotAnchors = [];
-    if (modelObj) { arGroup.remove(modelObj); modelObj = null; mindarThree = null; }
+    if (modelObj && arGroup) { arGroup.remove(modelObj); modelObj = null; }
+    mindarThree = null;
   }
 
   function buildHotspots() {

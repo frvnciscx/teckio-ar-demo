@@ -4,6 +4,18 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8.1] — 2026-05-29 · Hardening permisos cámara en tabletop
+
+### Added
+- **Pre-flight de permiso de cámara** explícito (`navigator.mediaDevices.getUserMedia`) ANTES de cargar MindAR. Fuerza el prompt nativo en navegadores funcionales.
+- **Detección de in-app browsers** (WhatsApp, Instagram, Facebook, LinkedIn, Twitter, TikTok). Si el usuario abrió el link desde una app de chat, el mensaje de error le dice explícitamente "abre el link en Safari/Chrome directamente".
+- **Mensajes de error específicos** por tipo de fallo: `NotAllowedError`, `NotFoundError`, `NotReadableError`, `OverconstrainedError`, `NOT_HTTPS`, `NO_CAMERA_API`, falta de `marker.mind` (404).
+
+### Changed
+- `exitAR()` ahora resetea el estilo de error del panel de status para que el siguiente intento empiece limpio.
+
+---
+
 ## [v0.8] — 2026-05-29 · Dual-mode: Scene Viewer (markerless) + MindAR (tabletop con marcador)
 
 ### Added
