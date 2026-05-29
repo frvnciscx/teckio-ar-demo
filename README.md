@@ -1,8 +1,10 @@
-# Teckio · WebAR Maqueta (Demo)
+# Teckio · WebAR Maqueta
 
-Página estática que muestra una maqueta arquitectónica en AR sobre superficies reales, vía cámara del teléfono, sin instalar app. Demo para Grupo Teckio.
+Página estática que muestra una maqueta arquitectónica en AR sobre superficies reales, vía cámara del teléfono, sin instalar app. Soporta múltiples proyectos, lead capture pre-AR y analytics granular.
 
-URL de deploy esperada: `https://frvnciscx.github.io/teckio-ar-demo/`
+**URL de deploy:** `https://frvnciscx.github.io/teckio-ar-demo/`
+
+**Versión actual:** v0.6 — ver [CHANGELOG.md](./CHANGELOG.md) para historial.
 
 ---
 
@@ -10,103 +12,236 @@ URL de deploy esperada: `https://frvnciscx.github.io/teckio-ar-demo/`
 
 ```
 RA/
-├── index.html               # Página model-viewer (estética dark)
-├── qr.png                   # QR apuntando a la URL de deploy
-├── README.md
+├── index.html                     # Página única, todo en un archivo
+├── README.md                      # Este archivo
+├── CHANGELOG.md                   # Historial de versiones
+├── qr.png                         # QR apuntando a la URL de deploy
 ├── assets/
-│   ├── maqueta.glb          # Modelo glTF binario (Android + WebXR)
-│   └── maqueta.usdz         # Modelo USDZ (iOS Quick Look)
+│   ├── logo-teckio.svg            # Logo navy (sobre fondo claro)
+│   ├── logo-teckio-light.svg      # Logo blanco (sobre fondo oscuro, usado en página)
+│   ├── maqueta.glb                # Modelo principal (Android/desktop, texturizado)
+│   └── maqueta.usdz               # Modelo principal (iOS Quick Look, sin texturas)
 └── scripts/
-    └── build_maqueta.mjs    # Generador Node + Three.js → .glb + .usdz
+    ├── build_maqueta.mjs          # Genera maqueta esquemática sintética (Three.js + Node)
+    ├── convert_glb_to_usdz.mjs    # Convierte .glb → .usdz (USDZExporter Three.js)
+    └── preload.mjs                # Polyfills para correr GLTFLoader en Node
 ```
 
-La maqueta de Fase 0 es geometría esquemática (base + 3 volúmenes + acento), generada por código para no depender de modelos externos.
+---
+
+## Configuración rápida (lo que TÚ debes editar)
+
+En `index.html`, dentro del `<script>` principal, hay un bloque `CONFIG` con 3 constantes que controlan integraciones externas:
+
+```js
+// Webhook que recibe leads del formulario (n8n / Make / Zapier / Apps Script).
+// Vacío = los leads solo se guardan en localStorage (perdidos al limpiar caché).
+const LEAD_WEBHOOK = '';
+
+// Webhook que recibe eventos de analytics. Vacío = solo console.log.
+const ANALYTICS_WEBHOOK = '';
+
+// Número WhatsApp de Teckio (código país sin "+"). Aparece en todos los CTAs.
+const WA_NUMBER = '525555555555';   // ← cambiar por número real
+```
+
+**Adicional opcional — Plausible Analytics:** descomenta el `<script>` en `<head>` y pon tu dominio. Los eventos `track()` se envían automáticamente.
 
 ---
 
 ## Deploy a GitHub Pages
 
-1. Crea el repo en GitHub: `frvnciscx/teckio-ar-demo`.
-2. En esta carpeta:
-   ```
+1. Crea el repo `frvnciscx/teckio-ar-demo` en GitHub (vacío, sin README/gitignore).
+2. Desde esta carpeta:
+   ```bash
    git init
    git add .
-   git commit -m "fase 0: plumbing AR"
+   git commit -m "init"
    git branch -M main
-   git remote add origin git@github.com:frvnciscx/teckio-ar-demo.git
+   git remote add origin https://github.com/frvnciscx/teckio-ar-demo.git
    git push -u origin main
    ```
-3. En el repo en GitHub → Settings → Pages → Source: `Deploy from a branch` → Branch: `main` / root → Save.
+3. En el repo → Settings → Pages → Source: `Deploy from a branch` → Branch: `main` / `/ (root)` → Save.
 4. Espera ~1 min. La URL será `https://frvnciscx.github.io/teckio-ar-demo/`.
-5. Escanea `qr.png` desde el celular (iOS y Android) y prueba el botón **Ver en mi espacio**.
 
-> **HTTPS es obligatorio** para AR. GitHub Pages lo da por defecto.
-
----
-
-## Criterios de éxito Fase 0
-
-- [ ] iOS Safari: el botón AR abre Quick Look y la maqueta queda anclada en una superficie real.
-- [ ] Android Chrome: el botón AR lanza Scene Viewer y la maqueta queda anclada.
-- [ ] Desktop: la página carga, se ve el modelo con controles de órbita, el botón AR no rompe nada (no aparece).
-
-Si los tres pasan, el riesgo técnico de AR está muerto y podemos pasar a Fase 1.
+**HTTPS es obligatorio para AR.** GitHub Pages lo provee por default.
 
 ---
 
-## Fase 1 — Pipeline Revit → `.glb` + `.usdz` (sin Mac)
+## Multi-proyecto (un dominio, N proyectos)
 
-Esto reemplaza solo los dos archivos en `assets/`. El `index.html` no cambia.
+El sistema soporta múltiples proyectos desde el mismo deploy. URL pattern:
 
-### A. Revit → glTF (.glb)
+- `https://frvnciscx.github.io/teckio-ar-demo/` → default (`altavia`)
+- `https://frvnciscx.github.io/teckio-ar-demo/?p=altavia` → Residencial Altavía
+- `https://frvnciscx.github.io/teckio-ar-demo/?p=siena` → Torres Siena (ejemplo, requiere descomentar)
 
-Opciones (elige una):
+### Cómo agregar un proyecto nuevo
 
-1. **Plugin gratuito**: instala el add-in `glTFRevitExport` (Pawel Block, GitHub: `pawelb-cad/glTFRevitExport`) en Revit. Exporta la vista 3D directamente a `.glb`.
-2. **Vía FBX → Blender**: en Revit exporta FBX, abre en Blender (gratis), limpia y exporta como `.glb` (File → Export → glTF 2.0, formato Binary).
+1. **Procesa su `.glb` de Revit** siguiendo la sección [Pipeline del modelo](#pipeline-del-modelo-revit--glb--usdz).
+2. **Copia los archivos** a `assets/`:
+   ```
+   assets/siena.glb
+   assets/siena.usdz
+   ```
+3. **Agrega el bloque del proyecto** en `index.html` dentro del objeto `PROJECTS`:
+   ```js
+   siena: {
+     key: 'siena',
+     name: 'Torres Siena',
+     location: 'San Miguel de Allende, Gto.',
+     tipologia: 'Vertical residencial',
+     unidades: 56,
+     entrega: 'Q1 2028',
+     tagline: 'Lofts contemporáneos en el centro histórico.',
+     modelGlb:  'assets/siena.glb',
+     modelUsdz: 'assets/siena.usdz',
+     stats: { disponibles: 48, apartadas: 6, vendidas: 2 },
+     units: { /* ver Altavía como referencia */ },
+   },
+   ```
+4. **Genera un QR específico** que apunte a `https://.../?p=siena` y pégalo en folletos de Siena.
 
-### B. Optimización en Blender (recomendado)
+Cada proyecto tiene su propio flag de lead capture en localStorage — un usuario que ya dio sus datos en Altavía sigue viendo el form en Siena.
 
-Objetivo: `.glb` < 10–15 MB para carga aceptable en móvil con datos.
+---
 
-- Decimate Modifier en geometrías densas (target ratio 0.3–0.6).
-- Unifica materiales similares (PBR Standard) — muchos materiales pesan más que muchos polígonos.
-- Borra metadata Revit innecesaria (capas vacías, cámaras, luces que no aportan).
-- Texturas: máximo 1024×1024, formato KTX2 si es posible (Blender ≥ 4.0).
-- Export → glTF 2.0 → Format: `glb`, Include: `Selected Objects` o `Visible Objects`, Geometry: `Apply Modifiers` + `Compression (Draco)`.
+## Pipeline del modelo (Revit → glb → usdz)
 
-### C. `.glb` → `.usdz` (sin Mac, en Windows/Linux)
+Los exports de Revit pesan en promedio 80–150 MB. Sin optimización, son inusables en móvil con datos. El proceso documentado:
 
-Tres caminos. Recomendado en orden:
+### 1. Export desde Revit a `.glb`
 
-**Opción 1 — Node + Three.js USDZExporter (lo que usamos aquí, repetible):**
+- **Opción A** (recomendada): plugin gratuito `glTFRevitExport` (Pawel Block) — exporta vista 3D directo.
+- **Opción B**: FBX → Blender → File → Export → glTF 2.0 (formato binario).
+
+### 2. Optimización de texturas (Python + PIL)
+
+El 99% del peso son las texturas. Script optimizador:
+
+```python
+# Compactar texturas 8K → 1K JPEG q82
+# In: in.glb (93 MB)  Out: out_optimized.glb (1.5 MB)  ratio: 60×
+# Implementación: parsea GLB, extrae bufferViews de imágenes, redimensiona con PIL,
+# re-encodea como JPEG progresivo, reconstruye binary chunk con offsets nuevos.
+```
+
+(El script vive en el historial — pídelo si necesitas re-ejecutarlo).
+
+### 3. Escalar para AR manipulable
+
+Si el modelo es a escala real (>10 m), Scene Viewer/Quick Look lo tratan como "world scale" y bloquean manipulación. Para que el usuario pueda arrastrar/rotar el modelo en AR, lo envolvemos en un nodo root con `scale=[0.02, 0.02, 0.02]` → modelo a tamaño maqueta de mesa (~75 cm).
+
+### 4. Generar `.usdz` para iOS
 
 ```bash
 cd scripts
-npm init -y
-npm install three
-node build_from_glb.mjs   # script propio que cargues el .glb y exporte .usdz
+npm install three @napi-rs/canvas
+node --import ./preload.mjs convert_glb_to_usdz.mjs \
+     ../assets/maqueta.glb ../assets/maqueta.usdz
 ```
 
-> En este repo, `scripts/build_maqueta.mjs` genera la maqueta de demo desde cero. Para convertir un `.glb` existente, hay que cargarlo con `GLTFLoader` (en Node requiere polyfills mínimos: `FileReader`, `XMLHttpRequest` o usar `fs.readFileSync` + `parser.parse`). Te lo armo cuando tengas el `.glb` real.
+**Limitación conocida:** el USDZExporter de Three.js corriendo en Node **dropea las texturas** (no puede ejecutar canvas headless completo). El `.usdz` resultante tiene geometría correcta pero **materiales monocromos**. iOS Quick Look muestra modelo gris; Android (que usa el `.glb`) muestra texturizado. Si necesitas USDZ con texturas, alternativas:
 
-**Opción 2 — Convertidor online (rápido, sin instalar nada):**
+| Vía | Costo | Calidad |
+|---|---|---|
+| Apple Reality Converter | Gratis, solo macOS | Excelente |
+| Aspose online glb→usdz | Gratis web | Buena |
+| `usd_from_gltf` (Google) | Compilar en Linux | Excelente, doloroso de setup |
 
-- `https://products.aspose.app/3d/conversion/glb-to-usdz` — sube `.glb`, descarga `.usdz`.
-- `https://anyconv.com/glb-to-usdz-converter/` — alternativa.
+---
 
-**Riesgo**: la calidad del USDZ en iOS Quick Look varía. Siempre verifica en un iPhone real antes de presentar al cliente. Si Quick Look se queja, prueba la siguiente opción.
+## Sistema de Lead Capture
 
-**Opción 3 — `usd_from_gltf` (Google, calidad máxima, requiere build):**
+El click en "Ver en mi espacio" intercepta el dispatch interno de model-viewer:
 
-Repo: `https://github.com/google/usd_from_gltf`. Compila en WSL/Linux (necesita USD de Pixar). Es la herramienta más fiel pero la más pesada de instalar. Solo si las opciones 1 y 2 fallan.
+1. Si `localStorage[teckio_lead_<project_key>]` está vacío o expirado (>30 días) → abre modal con form.
+2. Form requiere `nombre` (≥2 chars) + `teléfono` (≥10 dígitos numéricos). `presupuesto` es opcional.
+3. Submit dispara `fetch()` POST fire-and-forget al `LEAD_WEBHOOK`, marca flag en localStorage, abre AR.
+4. "Continuar sin registrarme" salta el form sin marcar flag (siguiente visita verá form de nuevo).
 
-### D. Reemplazar y volver a probar
+### Payload enviado al webhook
 
-1. Sustituye `assets/maqueta.glb` y `assets/maqueta.usdz` por los nuevos.
-2. Mantén los mismos nombres (o ajusta `src` e `ios-src` en `index.html`).
-3. `git commit` + `git push`.
-4. Verifica de nuevo en iOS y Android.
+```json
+{
+  "name": "Juan Pérez",
+  "phone": "5212345678",
+  "budget": "3-5m",
+  "project": "altavia",
+  "project_name": "Residencial Altavía",
+  "ts": 1748534400000
+}
+```
+
+Sugerencia: tu webhook (n8n / Make / Zapier) debe (a) validar anti-spam, (b) push al CRM, (c) mandar autoresponder al lead vía email/WhatsApp.
+
+---
+
+## Sistema de Analytics
+
+Función `track(event, props)` global. Cada evento se envía simultáneamente a 4 destinos:
+
+1. `console.log` (debugging)
+2. `window.dataLayer` (compatible Google Tag Manager / GA4)
+3. `window.plausible()` si Plausible está cargado en `<head>`
+4. `fetch()` POST al `ANALYTICS_WEBHOOK` (si está configurado)
+
+### Eventos disparados
+
+| Evento | Props | Disparado en |
+|---|---|---|
+| `page_view` | `user_agent`, `referrer` | Carga inicial |
+| `ar_intent` | — | Click en "Ver en mi espacio" |
+| `lead_form_open` | — | Modal del form se abre |
+| `lead_form_submit` | `has_budget` | Submit exitoso |
+| `lead_form_skip` | — | Click "Continuar sin registrarme" |
+| `lead_form_close` | — | Backdrop click / Escape |
+| `ar_start` | — | `ar-status=session-started` |
+| `ar_end` | `duration_s` | `ar-status=not-presenting` después de start |
+| `ar_failed` | — | `ar-status=failed` |
+| `hotspot_click` | `unit`, `status` | Tap en hotspot |
+| `sheet_view` | `unit`, `type`, `status` | Modal de detalle abierto |
+| `cta_whatsapp_global_click` | — | CTA global "Agendar demo" |
+| `cta_whatsapp_unit_click` | `unit`, `status` | CTA dentro del sheet de unidad |
+
+Todos los eventos incluyen `project` (key) y `ts` (timestamp) automáticamente.
+
+---
+
+## Hotspots
+
+6 hotspots representativos sobre el modelo Altavía. Posiciones en coordenadas del modelo (ya escalado a 75cm):
+
+| Slot | Posición (x y z) | Unit ID | Status |
+|---|---|---|---|
+| `hotspot-PH-01` | `0.30 0.17 0.14` | PH-01 | disponible |
+| `hotspot-PH-02` | `-0.30 0.17 0.14` | PH-02 | apartado |
+| `hotspot-T-301` | `0.20 0.11 0.14` | T-301 | disponible |
+| `hotspot-T-204` | `-0.20 0.11 0.14` | T-204 | disponible |
+| `hotspot-T-105` | `0.16 0.05 0.14` | T-105 | vendido |
+| `hotspot-AM-PB` | `0 0.02 0.16` | AM-PB | amenidad |
+
+Para reubicar: edita `data-position` de cada `<button slot="hotspot-...">` en `index.html`. Las coordenadas son las del modelo escalado (0.02× del bbox original Revit de 37×9×18 m).
+
+---
+
+## Limitaciones conocidas
+
+### AR (Scene Viewer / Quick Look)
+
+- **Los hotspots NO funcionan en AR mode.** Scene Viewer (Android) y Quick Look (iOS) son apps nativas separadas. El navegador deja de correr, el DOM muere, los hotspots desaparecen. Por diseño de Google/Apple, no es bug de este código. El listener `ar-status` los oculta proactivamente.
+- **Gestos hardcoded en AR.** No podemos customizar cómo se mueve/rota el modelo dentro de Scene Viewer o Quick Look. Los gestos default son: 1 dedo arrastrar = mover, 2 dedos = rotar/escalar.
+- **Tracking SLAM inestable.** ARCore/ARKit pierden anchors si: el usuario mueve el celular rápido, apunta a paredes blancas/superficies brillantes, o hay poca luz. Mitigación UX: el sistema muestra "vuelve a apuntar al piso" cuando pierde tracking. Es física, no código.
+
+### iOS
+
+- **USDZ sin texturas.** Ver sección [Pipeline](#pipeline-del-modelo-revit--glb--usdz). Workaround manual con Aspose/Reality Converter si importa estéticamente.
+- **WebXR no soportado en iOS.** Apple no implementó WebXR en WebKit. Esto cierra la puerta a hotspots-en-AR para iOS sin usar nativa.
+
+### General
+
+- **No hay validación server-side del form.** Depende del webhook receptor (debe rechazar spam, validar campos, rate-limit).
+- **localStorage es del navegador.** Si el usuario borra datos del sitio, vuelve a ver el form.
 
 ---
 
@@ -114,22 +249,47 @@ Repo: `https://github.com/google/usd_from_gltf`. Compila en WSL/Linux (necesita 
 
 | Síntoma | Causa probable | Acción |
 |---|---|---|
-| iOS no abre Quick Look | `.usdz` mal formado o `ios-src` mal apuntado | Regenera `.usdz` (Opción 2 o 3 arriba). Verifica que `<model-viewer>` tenga `ios-src="assets/maqueta.usdz"`. |
-| Android no lanza Scene Viewer | El dispositivo no soporta ARCore | Revisa lista oficial Google. Algunos Android viejos sólo verán el modelo en pantalla, sin AR. |
-| El modelo carga pero "tiembla" en AR | Escala demasiado grande o pequeña | Ajusta `ar-scale="fixed"` o cambia las dimensiones en el `.glb` antes de exportar. |
-| Carga lenta en datos móviles | `.glb` > 15 MB | Decima en Blender, reduce texturas. |
-| Quick Look muestra modelo gris/sin materiales | Materiales no PBR o texturas faltantes en el `.usdz` | Re-exporta forzando materiales PBR estándar en Blender antes de convertir. |
+| GitHub Pages 404 "There isn't a GitHub Pages site here" | Pages no activado o repo privado | Settings → Pages → activar source `main / root`. Repo debe ser Public en cuenta Free. |
+| Modelo no actualiza en celular tras push | Cache del navegador o GitHub CDN | URLs del modelo ya tienen `?v=N` cache-bust. Ctrl+Shift+R en desktop. En móvil: cerrar browser completo + reabrir. |
+| iOS no abre Quick Look | `.usdz` corrupto o `ios-src` mal apuntado | Regenerar con Aspose online. Verificar URL en DevTools del Safari (Mac → Safari → Develop → iPhone). |
+| Android no lanza Scene Viewer | Dispositivo sin ARCore | Verificar dispositivo en [lista oficial Google](https://developers.google.com/ar/devices). Algunos Android viejos solo ven inline. |
+| Modelo no manipulable en AR | Modelo a "world scale" (demasiado grande) | Asegurarse que el `.glb` está escalado a tamaño maqueta (~75cm). Ver [Pipeline §3](#pipeline-del-modelo-revit--glb--usdz). |
+| Modelo "tiembla" o se sale de foco | ARCore/ARKit perdió tracking | Apuntar al piso, esperar 3-5 seg. Iluminar bien la habitación. No es bug. |
+| Hotspots no se ven en página | `.glb` no cargó o coords fuera del modelo | DevTools → Network → ver si `.glb` 200. Coords en `data-position` deben caer dentro del bbox del modelo escalado. |
+| Lead form no envía a webhook | `LEAD_WEBHOOK` vacío o CORS bloqueando | Llenar constante. El webhook debe permitir CORS desde tu dominio GitHub Pages. |
 
 ---
 
-## Fase 2 — Futura (no parte de este demo)
+## Roadmap (no implementado, en orden de valor)
 
-Hotspots de model-viewer para mostrar precio unitario / avance de obra desde ERP. Migración a Three.js puro si se requiere lógica más rica. El código actual ya está aislado en una sola página estática — sustituirla por una app Three.js completa no implica rehacer infra.
+**Tier 2 — wow factor presentación:**
+- Material variants (toggle fachada blanca/terracota/gris vía KHR_materials_variants)
+- Sun study slider (hora del día → sombras reales)
+- Camera presets (botones fachada/aérea/planta)
+- Floor exploder (animación que separa pisos)
+
+**Tier 3 — nice to have:**
+- PDF brochure download desde el sheet
+- Modo medir (tocar 2 puntos, mostrar distancia)
+- Floorplan 2D overlay toggle
+
+**Descartado:**
+- App nativa — friction kills funnel, ROI negativo vs web AR para visualización inmobiliaria. Reabrir solo si Teckio firma contrato de proyecto grande y quiere asset propio en stores.
+- Hotspots en AR mode — bloqueado por arquitectura Scene Viewer/Quick Look. Alternativas (Niantic Lightship, 8th Wall) o son caras o cerraron (8th Wall shutdown feb 2026).
 
 ---
 
-## Notas técnicas
+## Stack técnico
 
-- `model-viewer` versión 4.0.0 vía CDN de Google.
-- `ar-modes="webxr scene-viewer quick-look"` cubre los tres caminos (WebXR para Android Chrome reciente, Scene Viewer fallback en Android, Quick Look en iOS).
-- Sin backend, sin framework, sin build step. Puro estático.
+- **model-viewer 4.0.0** (Google) vía CDN
+- **HTML/CSS/JS estático** — sin framework, sin build step
+- **GitHub Pages** para deploy
+- **localStorage** para flag de lead capture
+- **fetch API** para webhooks (fire-and-forget)
+- Opcional: Plausible Analytics, Google Tag Manager, n8n/Make/Zapier para webhooks
+
+---
+
+## Contacto técnico
+
+Para issues, mejoras o agregar proyectos, este repo es la fuente de verdad. Cualquier cambio debe reflejarse en `CHANGELOG.md`.
