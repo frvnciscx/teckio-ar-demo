@@ -4,6 +4,15 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8.6] — 2026-05-29 · Fix sheet/lead durante fullscreen AR
+
+### Fixed
+- **Bug crítico**: tap "Unidades" durante AR → el sheet aparecía pero la página salía de fullscreen automáticamente, mostrándolos sobre el pre-AR screen en vez de sobre la cámara.
+- **Causa**: spec de Fullscreen API esconde TODO lo que no es descendiente del fullscreen root. Los modals (`#backdrop`, `#sheet`, `#lead`) vivían en `document.body`, fuera del árbol de `#ar-wrap` (el elemento en fullscreen).
+- **Solución**: al entrar a AR, mover programáticamente los 3 modals como hijos de `#ar-wrap` con `appendChild()`. Al salir de AR, devolverlos a `document.body` para que funcionen en la página pre-AR. Una sola fuente de verdad, sin duplicación.
+
+---
+
 ## [v0.8.5] — 2026-05-29 · Brute-force canvas fill en MindAR (fix banda negra)
 
 ### Fixed

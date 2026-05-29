@@ -303,7 +303,7 @@
   <div id="pre-ar">
     <header>
       <div class="logo-wrap"><img src="assets/logo-teckio-light.svg" alt="Teckio" /></div>
-      <span class="meta">Demo AR · v0.8.5<span class="mode-tag">Tabletop</span></span>
+      <span class="meta">Demo AR · v0.8.6<span class="mode-tag">Tabletop</span></span>
     </header>
 
     <main>
@@ -609,6 +609,12 @@
     arStatusEl.classList.remove('found');
     arStatusText.textContent = 'Solicitando permiso de cámara…';
 
+    // Mover modals DENTRO de ar-wrap para que sean visibles en fullscreen
+    // (spec de Fullscreen API esconde todo lo que esté fuera del fullscreen root)
+    arWrap.appendChild(backdrop);
+    arWrap.appendChild(sheet);
+    arWrap.appendChild(leadModal);
+
     // Request fullscreen (best effort — kills barras del navegador)
     try {
       const el = arWrap;
@@ -773,6 +779,12 @@
     try {
       if (document.fullscreenElement && document.exitFullscreen)               document.exitFullscreen();
       else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+    } catch(_) {}
+    // Devolver modals al body para que funcionen en pre-AR
+    try {
+      document.body.appendChild(backdrop);
+      document.body.appendChild(sheet);
+      document.body.appendChild(leadModal);
     } catch(_) {}
     arWrap.classList.remove('active');
     arActive = false;
