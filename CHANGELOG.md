@@ -4,6 +4,32 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+## [v0.8] — 2026-05-29 · Dual-mode: Scene Viewer (markerless) + MindAR (tabletop con marcador)
+
+### Added
+- **`tabletop.html`** — segunda página con stack **MindAR + Three.js** (image tracking con marcador físico). Hotspots, sheets y lead capture funcionan **EN AR** (no mueren al entrar al modo cámara, como pasaba con Scene Viewer/Quick Look).
+- **`assets/marker.png`** — diseño branded para imprimir (carta @ 200 DPI, 103 KB). Logo Teckio + patrones geométricos asimétricos en navy/orange para máximo feature tracking. Esquinas tipo ArUco. URL al fondo.
+- **`assets/marker-preview.png`** — versión web 600×776 para mostrar en la página pre-AR.
+- **`assets/js/projects.js`** — refactor: datos compartidos entre `index.html` y `tabletop.html`. Una sola fuente de verdad para `PROJECTS`, `WA_NUMBER`, webhooks. Incluye `hotspotsMarkerless` y `hotspotsMarker` por proyecto (coords distintas según el modo).
+- **`qr-tabletop.png`** — QR específico apuntando a `tabletop.html`.
+- **3 nuevos eventos de analytics:** `ar_marker_found`, `ar_marker_lost`, y el `mode: 'tabletop'` en todos los eventos de tabletop.html para distinguir de los de markerless.
+
+### Changed
+- `index.html` ahora carga `projects.js` para los datos (en vez de inline). Sin cambios funcionales para el usuario final.
+- Bump versión a v0.8.
+
+### Pendiente del usuario (no automatizable en sandbox)
+- **Compilar `marker.png` → `marker.mind`** usando https://hiukim.github.io/mind-ar-js-doc/tools/compile/ (subir PNG, descargar `.mind`, colocar en `assets/marker.mind`). MindAR no arranca sin este archivo.
+- **Imprimir `marker.png`** tamaño carta o A4. Plastificar si será de uso frecuente.
+
+### Known limitations (MindAR)
+- **iOS Safari**: pide permiso explícito de cámara. Si el usuario lo niega, hay que ir a Settings → Safari para revocar.
+- **Tracking jitter**: peor que Scene Viewer nativo en marker AR. Aceptable para tabletop, inestable a >50 cm de distancia.
+- **Battery drain**: TensorFlow.js + WebGL continuo calienta el celular. Sesiones largas drenan batería más rápido.
+- **Lighting sensitivity**: marker degrada en luz baja, reflejos, dobleces.
+
+---
+
 ## [v0.7] — 2026-05-29 · Wow factor — Controls (Vista / Tour / Día-Noche / Medir)
 
 ### Added
@@ -120,6 +146,7 @@ Todas las versiones notables de este proyecto. Formato basado en [Keep a Changel
 
 ---
 
+[v0.8]: ./CHANGELOG.md#v08--2026-05-29--dual-mode-scene-viewer-markerless--mindar-tabletop-con-marcador
 [v0.7]: ./CHANGELOG.md#v07--2026-05-29--wow-factor--controls-vista--tour--dia-noche--medir
 [v0.6]: ./CHANGELOG.md#v06--2026-05-29--multi-proyecto--lead-capture--analytics
 [v0.5]: ./CHANGELOG.md#v05--2026-05-29--escala-maqueta--ux-hotspots

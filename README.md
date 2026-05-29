@@ -4,7 +4,12 @@ Página estática que muestra una maqueta arquitectónica en AR sobre superficie
 
 **URL de deploy:** `https://frvnciscx.github.io/teckio-ar-demo/`
 
-**Versión actual:** v0.7 — ver [CHANGELOG.md](./CHANGELOG.md) para historial.
+**Versión actual:** v0.8 — ver [CHANGELOG.md](./CHANGELOG.md) para historial.
+
+**Dos modos AR coexisten:**
+
+- `https://frvnciscx.github.io/teckio-ar-demo/` → **modo markerless** (Scene Viewer / Quick Look). Cliente escanea QR, apunta al piso, ve el edificio. Hotspots solo en la página web.
+- `https://frvnciscx.github.io/teckio-ar-demo/tabletop.html` → **modo tabletop con marcador** (MindAR). Cliente apunta a un marcador físico impreso, ve la maqueta encima. **Hotspots y precios funcionan EN AR.**
 
 ---
 
@@ -12,20 +17,42 @@ Página estática que muestra una maqueta arquitectónica en AR sobre superficie
 
 ```
 RA/
-├── index.html                     # Página única, todo en un archivo
-├── README.md                      # Este archivo
-├── CHANGELOG.md                   # Historial de versiones
-├── qr.png                         # QR apuntando a la URL de deploy
+├── index.html                     # Modo markerless (Scene Viewer / Quick Look)
+├── tabletop.html                  # Modo tabletop con marcador (MindAR)
+├── README.md
+├── CHANGELOG.md
+├── qr.png                         # QR para modo markerless
+├── qr-tabletop.png                # QR para modo tabletop
 ├── assets/
+│   ├── js/
+│   │   └── projects.js            # DATA compartida (PROJECTS, WA_NUMBER, webhooks)
 │   ├── logo-teckio.svg            # Logo navy (sobre fondo claro)
-│   ├── logo-teckio-light.svg      # Logo blanco (sobre fondo oscuro, usado en página)
+│   ├── logo-teckio-light.svg      # Logo blanco (sobre fondo oscuro)
 │   ├── maqueta.glb                # Modelo principal (Android/desktop, texturizado)
-│   └── maqueta.usdz               # Modelo principal (iOS Quick Look, sin texturas)
+│   ├── maqueta.usdz               # Modelo principal (iOS Quick Look, sin texturas)
+│   ├── marker.png                 # Marcador físico para imprimir (carta @ 200 DPI)
+│   ├── marker-preview.png         # Versión web (preview en tabletop.html)
+│   └── marker.mind                # ⚠ TÚ DEBES GENERARLO — ver sección Compilar marcador
 └── scripts/
     ├── build_maqueta.mjs          # Genera maqueta esquemática sintética (Three.js + Node)
     ├── convert_glb_to_usdz.mjs    # Convierte .glb → .usdz (USDZExporter Three.js)
     └── preload.mjs                # Polyfills para correr GLTFLoader en Node
 ```
+
+---
+
+## Compilar el marcador (`marker.png` → `marker.mind`) — paso manual
+
+MindAR necesita un archivo binario `.mind` con los features de la imagen del marcador. **Tienes que generarlo TÚ** (la herramienta corre en navegador, no puedo hacerlo en sandbox).
+
+1. Abre la herramienta oficial: **https://hiukim.github.io/mind-ar-js-doc/tools/compile/**
+2. Carga `assets/marker.png` (botón "Choose File").
+3. Click en "Start" — procesa ~10 segundos.
+4. Descarga el `.mind` resultante.
+5. Renómbralo a **`marker.mind`** y guárdalo en `assets/marker.mind`.
+6. `git add` + `git commit` + `git push`.
+
+**Sin este archivo, `tabletop.html` muestra el pre-AR screen pero falla al iniciar la cámara** (verás "Error al iniciar AR" en el status).
 
 ---
 

@@ -10,6 +10,9 @@
   <!-- model-viewer (Google) -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 
+  <!-- Datos compartidos con tabletop.html -->
+  <script src="assets/js/projects.js"></script>
+
   <!--
     ============================================================================
     ANALYTICS — OPCIONAL: Plausible self-hosted o cloud.
@@ -388,7 +391,7 @@
     <div class="logo-wrap">
       <img src="assets/logo-teckio-light.svg" alt="Teckio" />
     </div>
-    <span class="meta" id="meta-tag">Demo AR · v0.7</span>
+    <span class="meta" id="meta-tag">Demo AR · v0.8</span>
   </header>
 
   <main>
@@ -542,71 +545,17 @@
 
   <script>
   /* ==========================================================================
-     CONFIG — Teckio: edita estas constantes
+     CONFIG + PROYECTOS — vienen de assets/js/projects.js (compartido con tabletop.html)
      ========================================================================== */
-
-  // Webhook donde se envían los leads del formulario (n8n, Make, Zapier, Apps Script).
-  // Si lo dejas en string vacío, no se envía nada (los datos solo se guardan local).
-  const LEAD_WEBHOOK = '';
-
-  // Webhook donde se envían los eventos de analytics (mismo endpoint o distinto).
-  // Si lo dejas vacío, los eventos solo se loguean a console.
-  const ANALYTICS_WEBHOOK = '';
-
-  // Número WhatsApp de Teckio (código país sin "+"). Aparece en todos los CTAs.
-  const WA_NUMBER = '525555555555';
-
-  /* ==========================================================================
-     CATÁLOGO DE PROYECTOS — un dominio sirve N proyectos vía ?p=key
-     Para agregar: duplica un bloque y cambia key, copy, modelGlb/Usdz, units.
-     ========================================================================== */
-  const PROJECTS = {
-
-    altavia: {
-      key: 'altavia',
-      name: 'Residencial Altavía',
-      location: 'Querétaro, Qro.',
-      tipologia: 'Vertical residencial',
-      unidades: 84,
-      entrega: 'Q3 2027',
-      tagline: 'Vivienda vertical con diseño contemporáneo en el corredor norte de Querétaro.',
-      modelGlb:  'assets/maqueta.glb?v=6',
-      modelUsdz: 'assets/maqueta.usdz?v=6',
-      stats: { disponibles: 67, apartadas: 12, vendidas: 5 },
-      units: {
-        'PH-01': { label: 'PH-01', floor: 'Piso 3', type: 'Penthouse Este',  area: 142, bedrooms: 3, baths: 2.5, price: 6800000, status: 'disponible' },
-        'PH-02': { label: 'PH-02', floor: 'Piso 3', type: 'Penthouse Oeste', area: 138, bedrooms: 3, baths: 2.5, price: 6500000, status: 'apartado' },
-        'T-301': { label: 'T-301', floor: 'Piso 3', type: 'Tipo C · 3 rec',  area:  95, bedrooms: 3, baths: 2,   price: 4200000, status: 'disponible' },
-        'T-204': { label: 'T-204', floor: 'Piso 2', type: 'Tipo B · 2 rec',  area:  72, bedrooms: 2, baths: 1,   price: 2800000, status: 'disponible' },
-        'T-105': { label: 'T-105', floor: 'Piso 1', type: 'Tipo A · 1 rec',  area:  54, bedrooms: 1, baths: 1,   price: 1900000, status: 'vendido' },
-        'AM-PB': { label: 'AM', floor: 'Planta baja', type: 'Amenidades', amenidades: true,
-                   amenities: ['Alberca semi-olímpica', 'Gimnasio equipado', 'Salón de usos múltiples', 'Roof garden', 'Co-working', 'Pet park'] },
-      },
-    },
-
-    // EJEMPLO de segundo proyecto — descoméntalo y agrega el .glb correspondiente
-    // siena: {
-    //   key: 'siena',
-    //   name: 'Torres Siena',
-    //   location: 'San Miguel de Allende, Gto.',
-    //   tipologia: 'Vertical residencial',
-    //   unidades: 56,
-    //   entrega: 'Q1 2028',
-    //   tagline: 'Lofts contemporáneos en el centro histórico.',
-    //   modelGlb:  'assets/siena.glb',
-    //   modelUsdz: 'assets/siena.usdz',
-    //   stats: { disponibles: 48, apartadas: 6, vendidas: 2 },
-    //   units: { /* ... */ },
-    // },
-
-  };
+  const LEAD_WEBHOOK      = window.TECKIO.LEAD_WEBHOOK;
+  const ANALYTICS_WEBHOOK = window.TECKIO.ANALYTICS_WEBHOOK;
+  const WA_NUMBER         = window.TECKIO.WA_NUMBER;
+  const PROJECTS          = window.TECKIO.PROJECTS;
 
   /* ==========================================================================
      RESOLVER PROYECTO DESDE URL
      ========================================================================== */
-  const params = new URLSearchParams(location.search);
-  const projectKey = (params.get('p') || params.get('proyecto') || 'altavia').toLowerCase();
-  const project = PROJECTS[projectKey] || PROJECTS.altavia;
+  const project = window.TECKIO.resolveProject();
 
   /* ==========================================================================
      ANALYTICS — track(event, props) — corre en console + dataLayer + Plausible + webhook
